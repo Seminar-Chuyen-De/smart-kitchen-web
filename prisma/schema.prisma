@@ -1,0 +1,101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ================================
+// USER PROFILE
+// Clerk quản lý auth, ta chỉ lưu thêm profile data
+// ================================
+model User {
+  id        String   @id // Clerk User ID
+  email     String   @unique
+  name      String?
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  cookbooks Cookbook[]
+  recipes   Recipe[]
+
+  @@map("users")
+}
+
+// ================================
+// COOKBOOK
+// Tập hợp các recipe của 1 user
+// ================================
+model Cookbook {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  coverImage  String?  @map("cover_image")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  userId  String   @map("user_id")
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipes Recipe[]
+
+  @@map("cookbooks")
+}
+
+// ================================
+// RECIPE
+// Được generate bởi AI hoặc tạo thủ công
+// ================================
+model Recipe {
+  id           String      @id @default(cuid())
+  title        String
+  description  String?
+  ingredients  Json        // string[] — danh sách nguyên liệu
+  instructions Json        // string[] — các bước nấu
+  cookTime     Int?        @map("cook_time") // phút
+  servings     Int?
+  imageUrl     String?     @map("image_url") // ảnh nguyên liệu gốc user upload
+  source       RecipeSource @default(AI_GENERATED)
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  userId     String    @map("user_id")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cookbookId String?   @map("cookbook_id")
+  cookbook   Cookbook? @relation(fields: [cookbookId], references: [id], onDelete: SetNull)
+
+  scans ScanLog[]
+
+  @@map("recipes")
+}
+
+// ================================
+// SCAN LOG
+// Lưu lại lịch sử mỗi lần user scan ảnh
+// ================================
+model ScanLog {
+  id              String   @id @default(cuid())
+  imageUrl        String   @map("image_url")
+  detectedItems   Json     @map("detected_items") // string[] từ Vision API
+  confidenceScore Float?   @map("confidence_score")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  recipeId String? @map("recipe_id")
+  recipe   Recipe? @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+
+  @@map("scan_logs")
+}
+
+// ================================
+// ENUMS
+// ================================
+enum RecipeSource {
+  AI_GENERATED
+  MANUAL
+  IMPORTED
+}
