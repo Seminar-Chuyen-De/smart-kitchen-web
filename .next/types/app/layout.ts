@@ -1,4 +1,4 @@
-// File: D:\HocTap\Nam4\Hk2\Seminar\Smart-kitchen-VN\smart-kitchen-web\app\layout.tsx
+// File: D:\Smart_Kitchen_project\smart-kitchen-web\app\layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
