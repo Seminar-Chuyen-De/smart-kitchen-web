@@ -12,71 +12,177 @@ datasource db {
 
 // ================================
 // USER PROFILE
-// Clerk quản lý auth, ta chỉ lưu thêm profile data
+// Clerk quản lý auth, tích hợp với Clerk User ID
 // ================================
 model User {
-  id        String   @id // Clerk User ID
+  userId    String   @id @map("user_id") // UUID string từ Clerk
   email     String   @unique
-  name      String?
+  username  String
   avatarUrl String?  @map("avatar_url")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  cookbooks Cookbook[]
   recipes   Recipe[]
+  cookbooks Cookbook[]
 
   @@map("users")
 }
 
 // ================================
-// COOKBOOK
-// Tập hợp các recipe của 1 user
-// ================================
-model Cookbook {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  coverImage  String?  @map("cover_image")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  userId  String   @map("user_id")
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recipes Recipe[]
-
-  @@map("cookbooks")
-}
-
-// ================================
 // RECIPE
-// Được generate bởi AI hoặc tạo thủ công
+// Công thức nấu ăn
 // ================================
 model Recipe {
-  id           String      @id @default(cuid())
-  title        String
-  description  String?
-  ingredients  Json        // string[] — danh sách nguyên liệu
-  instructions Json        // string[] — các bước nấu
-  cookTime     Int?        @map("cook_time") // phút
-  servings     Int?
-  imageUrl     String?     @map("image_url") // ảnh nguyên liệu gốc user upload
-  source       RecipeSource @default(AI_GENERATED)
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @updatedAt @map("updated_at")
+  recipeId       Int         @id @default(autoincrement()) @map("recipe_id")
+  userId         String      @map("user_id")
+  recipesName    String      @map("recipes_name")
+  description    String?     @db.Text
+  imageRecipe    String?     @map("image_recipe")
+  totalTime      Int?        @map("total_time")
+  calories       Float?
+  protein        Float?
+  carbs          Float?
+  fats           Float?
+  sourceType     SourceType? @map("source_type")
+  numberOfServes Int?        @map("number_of_serves")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
 
-  userId     String    @map("user_id")
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cookbookId String?   @map("cookbook_id")
-  cookbook   Cookbook? @relation(fields: [cookbookId], references: [id], onDelete: SetNull)
-
-  scans ScanLog[]
+  user              User               @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  steps             Step[]
+  recipeIngredients RecipeIngredient[]
+  recipeTags        RecipeTag[]
+  cookbookRecipes   CookbookRecipe[]
+  scans             ScanLog[]
 
   @@map("recipes")
 }
 
 // ================================
+// COOKBOOK
+// Bộ sưu tập công thức
+// ================================
+model Cookbook {
+  cookbookId Int      @id @default(autoincrement()) @map("cookbook_id")
+  userId     String   @map("user_id")
+  name       String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user            User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  cookbookRecipes CookbookRecipe[]
+
+  @@index([createdAt])
+  @@map("cookbooks")
+}
+
+// ================================
+// JUNCTION: COOKBOOK ↔ RECIPE
+// ================================
+model CookbookRecipe {
+  recipeId   Int      @map("recipe_id")
+  cookbookId Int      @map("cookbook_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  recipe   Recipe   @relation(fields: [recipeId], references: [recipeId], onDelete: Cascade)
+  cookbook Cookbook @relation(fields: [cookbookId], references: [cookbookId], onDelete: Cascade)
+
+  @@id([recipeId, cookbookId])
+  @@map("cookbook_recipes")
+}
+
+// ================================
+// STEP
+// Các bước thực hiện công thức
+// ================================
+model Step {
+  stepId      Int      @id @default(autoincrement()) @map("step_id")
+  recipeId    Int      @map("recipe_id")
+  stepNumber  Int      @map("step_number")
+  instruction String   @db.Text
+  tip         String?  @db.Text
+  time        Int?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  recipe Recipe @relation(fields: [recipeId], references: [recipeId], onDelete: Cascade)
+
+  @@map("steps")
+}
+
+// ================================
+// INGREDIENT
+// Nguyên liệu nấu ăn
+// ================================
+model Ingredient {
+  ingredientId Int      @id @default(autoincrement()) @map("ingredient_id")
+  name         String
+  icon         String?
+  bgColor      String?  @default("#F5F5F5") @map("bg_color")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  recipeIngredients RecipeIngredient[]
+
+  @@map("ingredients")
+}
+
+// ================================
+// JUNCTION: RECIPE ↔ INGREDIENT
+// ================================
+model RecipeIngredient {
+  recipeId     Int      @map("recipe_id")
+  ingredientId Int      @map("ingredient_id")
+  quantity     Float?
+  unit         String?
+  note         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  recipe     Recipe     @relation(fields: [recipeId], references: [recipeId], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [ingredientId], onDelete: Cascade)
+
+  @@id([recipeId, ingredientId])
+  @@map("recipe_ingredients")
+}
+
+// ================================
+// TAG
+// Nhãn phân loại
+// ================================
+model Tag {
+  tagId     Int      @id @default(autoincrement()) @map("tag_id")
+  name      String
+  category  String?
+  emoji     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  recipeTags RecipeTag[]
+
+  @@map("tags")
+}
+
+// ================================
+// JUNCTION: RECIPE ↔ TAG
+// ================================
+model RecipeTag {
+  recipeId  Int      @map("recipe_id")
+  tagId     Int      @map("tag_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  recipe Recipe @relation(fields: [recipeId], references: [recipeId], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [tagId], onDelete: Cascade)
+
+  @@id([recipeId, tagId])
+  @@map("recipe_tags")
+}
+
+// ================================
 // SCAN LOG
-// Lưu lại lịch sử mỗi lần user scan ảnh
+// Lưu lại lịch sử mỗi lần user scan ảnh (Tùy chọn)
 // ================================
 model ScanLog {
   id              String   @id @default(cuid())
@@ -85,8 +191,8 @@ model ScanLog {
   confidenceScore Float?   @map("confidence_score")
   createdAt       DateTime @default(now()) @map("created_at")
 
-  recipeId String? @map("recipe_id")
-  recipe   Recipe? @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  recipeId Int?    @map("recipe_id")
+  recipe   Recipe? @relation(fields: [recipeId], references: [recipeId], onDelete: SetNull)
 
   @@map("scan_logs")
 }
@@ -94,8 +200,8 @@ model ScanLog {
 // ================================
 // ENUMS
 // ================================
-enum RecipeSource {
-  AI_GENERATED
+enum SourceType {
   MANUAL
   IMPORTED
+  AI_GENERATED
 }
