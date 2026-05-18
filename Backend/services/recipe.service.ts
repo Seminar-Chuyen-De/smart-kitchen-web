@@ -2,11 +2,33 @@ import { prisma } from "@/backend/db/client";
 import type { CreateRecipeInput, UpdateRecipeInput } from "@/backend/schemas/recipe.schema";
 
 // ================================
-// GET ALL RECIPES của 1 user
+// GET ALL RECIPES (WITH FILTERS) của 1 user
 // ================================
-export async function getRecipesByUser(userId: string) {
+export async function searchRecipes(
+  userId: string,
+  query?: string,
+  source?: string,
+  cookbookId?: string
+) {
+  const where: any = { userId };
+
+  if (query) {
+    where.title = {
+      contains: query,
+      mode: "insensitive",
+    };
+  }
+
+  if (source) {
+    where.source = source;
+  }
+
+  if (cookbookId) {
+    where.cookbookId = cookbookId;
+  }
+
   return prisma.recipe.findMany({
-    where: { userId },
+    where,
     orderBy: { createdAt: "desc" },
     include: {
       steps: {
@@ -29,6 +51,10 @@ export async function getRecipesByUser(userId: string) {
       }
     }
   });
+}
+
+export async function getRecipesByUser(userId: string) {
+  return searchRecipes(userId);
 }
 
 // ================================
