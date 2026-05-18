@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { CheckCircle2, XCircle, Info, AlertTriangle, X } from 'lucide-react';
-import { useToast, type Toast, type ToastType } from '@/Frontend/contexts/ToastContext';
+import { useToast, type Toast, type ToastType } from '@/frontend/contexts/ToastContext';
 
 const toastConfig: Record<
   ToastType,

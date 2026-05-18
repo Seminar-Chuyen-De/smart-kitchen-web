@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import ProfilePage from '@/Frontend/components/pages/ProfilePage';
+import ProfilePage from '@/frontend/components/pages/ProfilePage';
 
 export const metadata: Metadata = {
   title: 'Hồ sơ — Smart Kitchen VN',

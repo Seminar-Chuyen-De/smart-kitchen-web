@@ -1,8 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/frontend/components/layout/Navbar";
-import { ToastProvider } from "@/Frontend/contexts/ToastContext";
-import ToastContainer from "@/Frontend/components/ui/Toast";
+import { ToastProvider } from "@/frontend/contexts/ToastContext";
+import ToastContainer from "@/frontend/components/ui/Toast";
 
 export default async function DashboardLayout({
   children,
