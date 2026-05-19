@@ -8,17 +8,56 @@ export async function getRecipesByUser(userId: string) {
   return prisma.recipe.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    include: { cookbook: { select: { id: true, title: true } } },
+    include: {
+      steps: {
+        orderBy: { stepNumber: "asc" }
+      },
+      recipeIngredients: {
+        include: {
+          ingredient: true
+        }
+      },
+      recipeTags: {
+        include: {
+          tag: true
+        }
+      },
+      cookbookRecipes: {
+        include: {
+          cookbook: true
+        }
+      }
+    }
   });
 }
 
 // ================================
 // GET SINGLE RECIPE
 // ================================
-export async function getRecipeById(id: string, userId: string) {
+export async function getRecipeById(recipeId: number, userId: string) {
   return prisma.recipe.findFirst({
-    where: { id, userId },
-    include: { cookbook: true, scans: true },
+    where: { recipeId, userId },
+    include: {
+      steps: {
+        orderBy: { stepNumber: "asc" }
+      },
+      recipeIngredients: {
+        include: {
+          ingredient: true
+        }
+      },
+      recipeTags: {
+        include: {
+          tag: true
+        }
+      },
+      cookbookRecipes: {
+        include: {
+          cookbook: true
+        }
+      },
+      scans: true
+    }
   });
 }
 
@@ -26,11 +65,39 @@ export async function getRecipeById(id: string, userId: string) {
 // CREATE RECIPE
 // ================================
 export async function createRecipe(userId: string, data: CreateRecipeInput) {
+  const { ingredients, steps, tags, ...recipeData } = data;
+
   return prisma.recipe.create({
     data: {
-      ...data,
+      ...recipeData,
       userId,
+      steps: steps ? {
+        create: steps.map(s => ({
+          stepNumber:  s.stepNumber,
+          instruction: s.instruction,
+          tip:         s.tip,
+          time:        s.time,
+        }))
+      } : undefined,
+      recipeIngredients: ingredients ? {
+        create: ingredients.map(i => ({
+          ingredientId: i.ingredientId,
+          quantity:     i.quantity,
+          unit:         i.unit,
+          note:         i.note,
+        }))
+      } : undefined,
+      recipeTags: tags ? {
+        create: tags.map(t => ({
+          tagId: t.tagId,
+        }))
+      } : undefined,
     },
+    include: {
+      steps: { orderBy: { stepNumber: "asc" } },
+      recipeIngredients: { include: { ingredient: true } },
+      recipeTags: { include: { tag: true } }
+    }
   });
 }
 
@@ -38,26 +105,59 @@ export async function createRecipe(userId: string, data: CreateRecipeInput) {
 // UPDATE RECIPE
 // ================================
 export async function updateRecipe(
-  id: string,
+  recipeId: number,
   userId: string,
   data: UpdateRecipeInput
 ) {
   // Verify ownership trước khi update
-  const existing = await prisma.recipe.findFirst({ where: { id, userId } });
+  const existing = await prisma.recipe.findFirst({ where: { recipeId, userId } });
   if (!existing) return null;
 
+  const { ingredients, steps, tags, ...recipeData } = data;
+
   return prisma.recipe.update({
-    where: { id },
-    data,
+    where: { recipeId },
+    data: {
+      ...recipeData,
+      steps: steps ? {
+        deleteMany: {},
+        create: steps.map(s => ({
+          stepNumber:  s.stepNumber,
+          instruction: s.instruction,
+          tip:         s.tip,
+          time:        s.time,
+        }))
+      } : undefined,
+      recipeIngredients: ingredients ? {
+        deleteMany: {},
+        create: ingredients.map(i => ({
+          ingredientId: i.ingredientId,
+          quantity:     i.quantity,
+          unit:         i.unit,
+          note:         i.note,
+        }))
+      } : undefined,
+      recipeTags: tags ? {
+        deleteMany: {},
+        create: tags.map(t => ({
+          tagId: t.tagId,
+        }))
+      } : undefined,
+    },
+    include: {
+      steps: { orderBy: { stepNumber: "asc" } },
+      recipeIngredients: { include: { ingredient: true } },
+      recipeTags: { include: { tag: true } }
+    }
   });
 }
 
 // ================================
 // DELETE RECIPE
 // ================================
-export async function deleteRecipe(id: string, userId: string) {
-  const existing = await prisma.recipe.findFirst({ where: { id, userId } });
+export async function deleteRecipe(recipeId: number, userId: string) {
+  const existing = await prisma.recipe.findFirst({ where: { recipeId, userId } });
   if (!existing) return null;
 
-  return prisma.recipe.delete({ where: { id } });
+  return prisma.recipe.delete({ where: { recipeId } });
 }
