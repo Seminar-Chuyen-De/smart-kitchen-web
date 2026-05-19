@@ -32,13 +32,6 @@ async function main() {
 
   // Demo user
   const user = await prisma.user.upsert({
-    where: { userId: "user_38k6tDJSZWNF3b2tEnXkvFDluSR" },
-    update: {},
-    create: {
-      userId: "user_38k6tDJSZWNF3b2tEnXkvFDluSR",
-      email: "son2522004@gmail.com",
-      username: "Bá Sơn",
-    },
     where: { userId: "demo_clerk_user_id" },
     update: {},
     create: {
@@ -56,9 +49,7 @@ async function main() {
   await prisma.recipe.deleteMany({ where: { userId: user.userId } });
   await prisma.cookbook.deleteMany({ where: { userId: user.userId } });
 
-
-  // Demo tags
-
+  // Demo ingredients
   const egg = await getOrCreateIngredient("Trứng", "🥚");
   const rice = await getOrCreateIngredient("Cơm nguội", "🍚");
   const oil = await getOrCreateIngredient("Dầu ăn", "🛢️");
@@ -277,15 +268,50 @@ async function main() {
       },
     },
   });
+    const recipe7 = await prisma.recipe.create({
+    data: {
+      recipesName: "Bò lúc lắc 1",
+      description: "Thịt bò mềm ngọt xào cùng ớt chuông và hành tây",
+      totalTime: 30,
+      numberOfServes: 2,
+      sourceType: "AI_GENERATED",
+      userId: user.userId,
+      steps: {
+        create: [
+          { stepNumber: 1, instruction: "Thịt bò thái khối vuông, ướp với gia vị trong 15 phút.", time: 15 },
+          { stepNumber: 2, instruction: "Hành tây, cà chua thái múi cau.", time: 5 },
+          { stepNumber: 3, instruction: "Làm nóng chảo, xào nhanh thịt bò với lửa lớn rồi trút ra đĩa.", time: 5 },
+          { stepNumber: 4, instruction: "Phi tỏi thơm, xào hành tây, cà chua.", time: 3 },
+          { stepNumber: 5, instruction: "Cho thịt bò lại vào chảo, đảo đều, nêm nếm và tắt bếp.", time: 2 },
+        ],
+      },
+      recipeIngredients: {
+        create: [
+          { ingredientId: beef.ingredientId, quantity: 300, unit: "gram" },
+          { ingredientId: onion.ingredientId, quantity: 1, unit: "củ" },
+          { ingredientId: tomato.ingredientId, quantity: 1, unit: "quả" },
+          { ingredientId: garlic.ingredientId, quantity: 3, unit: "tép" },
+          { ingredientId: salt.ingredientId, quantity: 1, unit: "muỗng cafe" },
+          { ingredientId: pepper.ingredientId, quantity: 1, unit: "muỗng cafe" },
+        ],
+      },
+      recipeTags: {
+        create: [{ tagId: dinnerTag.tagId }, { tagId: mainDishTag.tagId }, { tagId: stirFriedTag.tagId }],
+      },
+    },
+  });
 
-  // Demo cookbooks (dùng junction table cookbookRecipes)
+  // Seed the 10 recommended recipes for the demo user
+  await seedDefaultRecipesForUser(user.userId);
+
+  // Demo cookbooks
   await prisma.cookbook.create({
     data: {
       name: "Công thức AI đầu tiên",
       userId: user.userId,
       cookbookRecipes: {
-        create: [{ recipeId: recipe1.recipeId }, { recipeId: recipe3.recipeId }],
-      },
+        create: [{ recipeId: recipe1.recipeId }, { recipeId: recipe3.recipeId }]
+      }
     },
   });
 
@@ -294,8 +320,8 @@ async function main() {
       name: "Món ngon gia đình",
       userId: user.userId,
       cookbookRecipes: {
-        create: [{ recipeId: recipe2.recipeId }, { recipeId: recipe3.recipeId }],
-      },
+        create: [{ recipeId: recipe2.recipeId }, { recipeId: recipe3.recipeId }]
+      }
     },
   });
 
@@ -304,8 +330,8 @@ async function main() {
       name: "Thực đơn chay thanh tịnh",
       userId: user.userId,
       cookbookRecipes: {
-        create: [{ recipeId: recipe6.recipeId }],
-      },
+        create: [{ recipeId: recipe6.recipeId }]
+      }
     },
   });
 
@@ -314,59 +340,12 @@ async function main() {
       name: "Tiệc cuối tuần",
       userId: user.userId,
       cookbookRecipes: {
-        create: [{ recipeId: recipe2.recipeId }, { recipeId: recipe4.recipeId }],
-      },
+        create: [{ recipeId: recipe2.recipeId }, { recipeId: recipe4.recipeId }]
+      }
     },
   });
 
-  console.log("✅ Seed database thành công!");
-  console.log(`   - User: ${user.userId}`);
-  console.log(`   - Recipes: recipe1=${recipe1.recipeId}, recipe2=${recipe2.recipeId}, ...`);
-  console.log(`   - Cookbooks: 4 cookbooks đã được tạo`);
-  await prisma.cookbook.create({
-    data: {
-      name: "Công thức AI đầu tiên",
-      userId: user.userId,
-      cookbookRecipes: {
-        create: [{ recipeId: recipe1.recipeId }, { recipeId: recipe3.recipeId }],
-      },
-    },
-  });
-
-  await prisma.cookbook.create({
-    data: {
-      name: "Món ngon gia đình",
-      userId: user.userId,
-      cookbookRecipes: {
-        create: [{ recipeId: recipe2.recipeId }, { recipeId: recipe3.recipeId }],
-      },
-    }
-  });
-
-  await prisma.cookbook.create({
-    data: {
-      name: "Thực đơn chay thanh tịnh",
-      userId: user.userId,
-      cookbookRecipes: {
-        create: [{ recipeId: recipe6.recipeId }],
-      },
-    },
-  });
-
-  await prisma.cookbook.create({
-    data: {
-      name: "Tiệc cuối tuần",
-      userId: user.userId,
-      cookbookRecipes: {
-        create: [{ recipeId: recipe2.recipeId }, { recipeId: recipe4.recipeId }],
-      },
-    },
-  });
-
-  console.log("✅ Seed database thành công!");
-  console.log(`   - User: ${user.userId}`);
-  console.log(`   - Recipes: recipe1=${recipe1.recipeId}, recipe2=${recipe2.recipeId}, ...`);
-  console.log(`   - Cookbooks: 4 cookbooks đã được tạo`);
+  console.log("✅ Seed database thành công với recipe ID:", recipe1.recipeId);
 }
 
 main()

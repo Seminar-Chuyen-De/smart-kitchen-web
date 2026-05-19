@@ -1,6 +1,8 @@
 {
-  "/dashboard/recipes/page": "app/dashboard/recipes/page.js",
-  "/dashboard/recipes/new/page": "app/dashboard/recipes/new/page.js",
+  "/api/cookbooks/route": "app/api/cookbooks/route.js",
+  "/api/recipes/route": "app/api/recipes/route.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/recipes/[id]/page": "app/dashboard/recipes/[id]/page.js"
+  "/dashboard/recipes/page": "app/dashboard/recipes/page.js",
+  "/dashboard/cookbooks/page": "app/dashboard/cookbooks/page.js",
+  "/dashboard/cookbooks/[id]/page": "app/dashboard/cookbooks/[id]/page.js"
 }
