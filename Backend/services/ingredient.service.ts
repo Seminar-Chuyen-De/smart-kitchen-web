@@ -10,12 +10,12 @@ export async function createIngredient(data: CreateIngredientInput) {
 
 // Recipe Ingredients
 export async function addIngredientToRecipe(recipeId: number, userId: string, data: CreateRecipeIngredientInput) {
-  const recipe = await prisma.recipe.findFirst({ where: { id: recipeId, userId } });
+  const recipe = await prisma.recipe.findFirst({ where: { recipeId, userId } });
   if (!recipe) return null;
   return prisma.recipeIngredient.create({ data: { ...data, recipeId } });
 }
 export async function removeIngredientFromRecipe(recipeId: number, ingredientId: number, userId: string) {
-  const recipe = await prisma.recipe.findFirst({ where: { id: recipeId, userId } });
+  const recipe = await prisma.recipe.findFirst({ where: { recipeId, userId } });
   if (!recipe) return null;
   return prisma.recipeIngredient.delete({ where: { recipeId_ingredientId: { recipeId, ingredientId } } });
 }

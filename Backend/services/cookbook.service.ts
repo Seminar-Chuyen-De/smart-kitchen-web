@@ -10,7 +10,7 @@ export async function getCookbooksByUser(userId: string) {
     orderBy: { createdAt: "desc" },
     include: {
       _count: {
-        select: { recipes: true }
+        select: { cookbookRecipes: true }
       }
     }
   });
@@ -19,10 +19,14 @@ export async function getCookbooksByUser(userId: string) {
 // ================================
 // GET SINGLE COOKBOOK (include recipes)
 // ================================
-export async function getCookbookById(id: string, userId: string) {
+export async function getCookbookById(cookbookId: number, userId: string) {
   return prisma.cookbook.findFirst({
-    where: { id, userId },
-    include: { recipes: true },
+    where: { cookbookId, userId },
+    include: {
+      cookbookRecipes: {
+        include: { recipe: true }
+      }
+    },
   });
 }
 
@@ -42,16 +46,15 @@ export async function createCookbook(userId: string, data: CreateCookbookInput) 
 // UPDATE COOKBOOK
 // ================================
 export async function updateCookbook(
-  id: string,
+  cookbookId: number,
   userId: string,
   data: UpdateCookbookInput
 ) {
-  // Verify ownership trước khi update
-  const existing = await prisma.cookbook.findFirst({ where: { id, userId } });
+  const existing = await prisma.cookbook.findFirst({ where: { cookbookId, userId } });
   if (!existing) return null;
 
   return prisma.cookbook.update({
-    where: { id },
+    where: { cookbookId },
     data,
   });
 }
@@ -59,44 +62,37 @@ export async function updateCookbook(
 // ================================
 // DELETE COOKBOOK
 // ================================
-export async function deleteCookbook(id: string, userId: string) {
-  const existing = await prisma.cookbook.findFirst({ where: { id, userId } });
+export async function deleteCookbook(cookbookId: number, userId: string) {
+  const existing = await prisma.cookbook.findFirst({ where: { cookbookId, userId } });
   if (!existing) return null;
 
-  return prisma.cookbook.delete({ where: { id } });
+  return prisma.cookbook.delete({ where: { cookbookId } });
 }
 
 // ================================
-// ADD RECIPE TO COOKBOOK
+// ADD RECIPE TO COOKBOOK (qua junction table CookbookRecipe)
 // ================================
-export async function addRecipeToCookbook(cookbookId: string, recipeId: string, userId: string) {
-  // Verify ownership của cookbook và recipe
+export async function addRecipeToCookbook(cookbookId: number, recipeId: number, userId: string) {
   const [cookbook, recipe] = await Promise.all([
-    prisma.cookbook.findFirst({ where: { id: cookbookId, userId } }),
-    prisma.recipe.findFirst({ where: { id: recipeId, userId } })
+    prisma.cookbook.findFirst({ where: { cookbookId, userId } }),
+    prisma.recipe.findFirst({ where: { recipeId, userId } })
   ]);
 
   if (!cookbook || !recipe) return null;
 
-  return prisma.recipe.update({
-    where: { id: recipeId },
-    data: { cookbookId },
+  return prisma.cookbookRecipe.create({
+    data: { cookbookId, recipeId },
   });
 }
 
 // ================================
 // REMOVE RECIPE FROM COOKBOOK
 // ================================
-export async function removeRecipeFromCookbook(cookbookId: string, recipeId: string, userId: string) {
-  // Verify ownership của recipe, đồng thời kiểm tra nó có thuộc cookbook này không
-  const recipe = await prisma.recipe.findFirst({
-    where: { id: recipeId, userId, cookbookId }
-  });
+export async function removeRecipeFromCookbook(cookbookId: number, recipeId: number, userId: string) {
+  const cookbook = await prisma.cookbook.findFirst({ where: { cookbookId, userId } });
+  if (!cookbook) return null;
 
-  if (!recipe) return null;
-
-  return prisma.recipe.update({
-    where: { id: recipeId },
-    data: { cookbookId: null },
+  return prisma.cookbookRecipe.delete({
+    where: { recipeId_cookbookId: { recipeId, cookbookId } },
   });
 }

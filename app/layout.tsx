@@ -18,8 +18,8 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="vi" className={inter.variable}>
-        <body>{children}</body>
+      <html lang="vi" className={inter.variable} suppressHydrationWarning>
+        <body suppressHydrationWarning>{children}</body>
       </html>
     </ClerkProvider>
   );
