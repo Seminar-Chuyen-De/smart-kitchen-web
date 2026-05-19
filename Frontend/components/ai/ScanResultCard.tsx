@@ -58,6 +58,9 @@ export function ScanResultCard({ result, onReset }: ScanResultCardProps) {
           total_time: recipe.cookTime,
           number_of_serves: recipe.servings,
           source_type: "AI_GENERATED",
+          ingredients: recipe.ingredients,
+          instructions: recipe.instructions,
+          image_recipe: recipe.image_recipe,
         }),
       });
       if (res.ok) {

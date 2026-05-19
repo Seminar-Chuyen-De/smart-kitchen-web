@@ -13,7 +13,7 @@ interface CookbookDetailProps {
 }
 
 export function CookbookDetail({ cookbookId }: CookbookDetailProps) {
-  const { cookbooks, updateCookbook, deleteCookbook, addRecipeToCookbook, removeRecipeFromCookbook } = useCookbooks();
+  const { cookbooks, fetchCookbooks, updateCookbook, deleteCookbook, addRecipeToCookbook, removeRecipeFromCookbook } = useCookbooks();
   const { recipes, fetchRecipes } = useRecipes();
   const [cookbook, setCookbook] = useState<Cookbook | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -21,6 +21,10 @@ export function CookbookDetail({ cookbookId }: CookbookDetailProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addSearch, setAddSearch] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  useEffect(() => {
+    fetchCookbooks();
+  }, [fetchCookbooks]);
 
   useEffect(() => {
     const found = cookbooks.find((cb) => cb.cookbook_id === cookbookId);

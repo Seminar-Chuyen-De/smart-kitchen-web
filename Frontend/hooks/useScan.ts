@@ -10,6 +10,7 @@ export interface ScanResult {
     instructions: string[];
     cookTime: number;
     servings: number;
+    image_recipe?: string;
   };
   scanLogId: string;
 }

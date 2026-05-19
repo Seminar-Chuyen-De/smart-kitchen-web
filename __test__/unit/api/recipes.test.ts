@@ -8,7 +8,6 @@ vi.mock("@clerk/nextjs/server", () => ({
 }));
 
 vi.mock("@/backend/services/recipe.service", () => ({
-  searchRecipes: vi.fn(),
   getRecipesByUser: vi.fn(),
   createRecipe: vi.fn(),
 }));
@@ -20,17 +19,15 @@ describe("API /api/recipes", () => {
 
   it("GET should return 401 if not authenticated", async () => {
     vi.mocked(clerk.auth).mockResolvedValueOnce({ userId: null } as any);
-    const mockRequest = { nextUrl: { searchParams: new URLSearchParams() } } as any;
-    const response = await GET(mockRequest);
+    const response = await GET();
     expect(response.status).toBe(401);
   });
 
   it("GET should return recipes if authenticated", async () => {
     vi.mocked(clerk.auth).mockResolvedValueOnce({ userId: "user_123" } as any);
-    vi.mocked(recipeService.searchRecipes).mockResolvedValueOnce([{ id: 1, recipesName: "Recipe 1" }] as any);
+    vi.mocked(recipeService.getRecipesByUser).mockResolvedValueOnce([{ id: 1, recipesName: "Recipe 1" }] as any);
     
-    const mockRequest = { nextUrl: { searchParams: new URLSearchParams() } } as any;
-    const response = await GET(mockRequest);
+    const response = await GET();
     const data = await response.json();
     
     expect(response.status).toBe(200);
@@ -39,12 +36,7 @@ describe("API /api/recipes", () => {
 
   it("POST should create recipe", async () => {
     vi.mocked(clerk.auth).mockResolvedValueOnce({ userId: "user_123" } as any);
-    const newRecipe = { 
-      title: "New Recipe", 
-      ingredients: ["ing1", "ing2"], 
-      instructions: ["step1", "step2"], 
-      source: "MANUAL" 
-    };
+    const newRecipe = { recipesName: "New Recipe", sourceType: "MANUAL" };
     const mockRequest = new Request("http://localhost/api/recipes", {
       method: "POST",
       body: JSON.stringify(newRecipe),
