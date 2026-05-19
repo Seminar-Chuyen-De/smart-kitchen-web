@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Edit2, Trash2, Plus, Search, X, Check } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Plus, Search, X, Check, Loader2 } from "lucide-react";
 import { useCookbooks } from "@/frontend/hooks/useCookbooks";
 import { useRecipes } from "@/frontend/hooks/useRecipes";
 import { RecipeList } from "@/frontend/components/recipe/RecipeList";
@@ -21,6 +21,7 @@ export function CookbookDetail({ cookbookId }: CookbookDetailProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addSearch, setAddSearch] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [loadingRecipeId, setLoadingRecipeId] = useState<number | null>(null);
 
   useEffect(() => {
     const found = cookbooks.find((cb) => cb.cookbook_id === cookbookId);
@@ -170,10 +171,17 @@ export function CookbookDetail({ cookbookId }: CookbookDetailProps) {
                   <button
                     key={recipe.recipe_id}
                     onClick={async () => {
-                      await addRecipeToCookbook(cookbookId, recipe.recipe_id);
-                      setShowAddModal(false);
+                      setLoadingRecipeId(recipe.recipe_id);
+                      try {
+                        await addRecipeToCookbook(cookbookId, recipe.recipe_id);
+                        await fetchCookbooks();
+                        setShowAddModal(false);
+                      } finally {
+                        setLoadingRecipeId(null);
+                      }
                     }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-brand-500/40 transition-all text-left group"
+                    disabled={loadingRecipeId === recipe.recipe_id}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-brand-500/40 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {recipe.image_recipe ? (
@@ -191,7 +199,11 @@ export function CookbookDetail({ cookbookId }: CookbookDetailProps) {
                         <p className="text-xs text-zinc-500">{recipe.total_time} phút</p>
                       )}
                     </div>
-                    <Plus className="w-4 h-4 text-zinc-600 group-hover:text-brand-400 flex-shrink-0 transition-colors" />
+                    {loadingRecipeId === recipe.recipe_id ? (
+                      <Loader2 className="w-4 h-4 text-brand-500 animate-spin flex-shrink-0" />
+                    ) : (
+                      <Plus className="w-4 h-4 text-zinc-600 group-hover:text-brand-400 flex-shrink-0 transition-colors" />
+                    )}
                   </button>
                 ))
               )}
