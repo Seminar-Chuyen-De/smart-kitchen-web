@@ -289,9 +289,14 @@ async function main() {
     },
   });
 
-  console.log("✅ Seed hoàn thành!");
+  console.log("✅ Seed database thành công với recipe ID:", recipe.recipeId);
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
-  .finally(async () => { await prisma.$disconnect(); });
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
