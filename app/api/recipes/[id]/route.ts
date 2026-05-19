@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getRecipeById, updateRecipe, deleteRecipe } from "@/backend/services/recipe.service";
 import { UpdateRecipeSchema } from "@/backend/schemas/recipe.schema";
-import { mapRecipeToFrontend } from "../route";
+import { mapRecipeToFrontend } from "@/backend/utils/recipe-mapper";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {

@@ -1,6 +1,31 @@
 import { PrismaClient } from "@prisma/client";
+import { seedDefaultRecipesForUser } from "./../Backend/services/default-recipes";
 
 const prisma = new PrismaClient();
+
+async function getOrCreateIngredient(name: string, icon: string) {
+  let ing = await prisma.ingredient.findFirst({
+    where: { name: { equals: name, mode: "insensitive" } }
+  });
+  if (!ing) {
+    ing = await prisma.ingredient.create({
+      data: { name, icon, bgColor: "#F5F5F5" }
+    });
+  }
+  return ing;
+}
+
+async function getOrCreateTag(name: string, category: string, emoji: string) {
+  let tag = await prisma.tag.findFirst({
+    where: { name: { equals: name, mode: "insensitive" } }
+  });
+  if (!tag) {
+    tag = await prisma.tag.create({
+      data: { name, category, emoji }
+    });
+  }
+  return tag;
+}
 
 async function main() {
   console.log("🌱 Seeding database...");
@@ -14,6 +39,13 @@ async function main() {
       email: "son2522004@gmail.com",
       username: "Bá Sơn",
     },
+    where: { userId: "demo_clerk_user_id" },
+    update: {},
+    create: {
+      userId: "demo_clerk_user_id",
+      email: "demo@smartkitchen.vn",
+      username: "Demo User",
+    },
   });
 
   // Clear old data for idempotent seeding
@@ -24,31 +56,40 @@ async function main() {
   await prisma.recipe.deleteMany({ where: { userId: user.userId } });
   await prisma.cookbook.deleteMany({ where: { userId: user.userId } });
 
-  // Demo ingredients
-  const egg = await prisma.ingredient.upsert({ where: { name: "Trứng" }, update: {}, create: { name: "Trứng", icon: "🥚" } });
-  const rice = await prisma.ingredient.upsert({ where: { name: "Cơm nguội" }, update: {}, create: { name: "Cơm nguội", icon: "🍚" } });
-  const oil = await prisma.ingredient.upsert({ where: { name: "Dầu ăn" }, update: {}, create: { name: "Dầu ăn", icon: "🛢️" } });
-  const pork = await prisma.ingredient.upsert({ where: { name: "Thịt heo" }, update: {}, create: { name: "Thịt heo", icon: "🥩" } });
-  const beef = await prisma.ingredient.upsert({ where: { name: "Thịt bò" }, update: {}, create: { name: "Thịt bò", icon: "🥩" } });
-  const tomato = await prisma.ingredient.upsert({ where: { name: "Cà chua" }, update: {}, create: { name: "Cà chua", icon: "🍅" } });
-  const onion = await prisma.ingredient.upsert({ where: { name: "Hành tây" }, update: {}, create: { name: "Hành tây", icon: "🧅" } });
-  const garlic = await prisma.ingredient.upsert({ where: { name: "Tỏi" }, update: {}, create: { name: "Tỏi", icon: "🧄" } });
-  const fishSauce = await prisma.ingredient.upsert({ where: { name: "Nước mắm" }, update: {}, create: { name: "Nước mắm", icon: "🍶" } });
-  const sugar = await prisma.ingredient.upsert({ where: { name: "Đường" }, update: {}, create: { name: "Đường", icon: "🧂" } });
-  const waterSpinach = await prisma.ingredient.upsert({ where: { name: "Rau muống" }, update: {}, create: { name: "Rau muống", icon: "🥬" } });
-  const mushroom = await prisma.ingredient.upsert({ where: { name: "Nấm" }, update: {}, create: { name: "Nấm", icon: "🍄" } });
-  const scallion = await prisma.ingredient.upsert({ where: { name: "Hành lá" }, update: {}, create: { name: "Hành lá", icon: "🌿" } });
-  const salt = await prisma.ingredient.upsert({ where: { name: "Muối" }, update: {}, create: { name: "Muối", icon: "🧂" } });
-  const pepper = await prisma.ingredient.upsert({ where: { name: "Tiêu" }, update: {}, create: { name: "Tiêu", icon: "🧂" } });
 
   // Demo tags
-  const breakfastTag = await prisma.tag.upsert({ where: { name: "Bữa sáng" }, update: {}, create: { name: "Bữa sáng", category: "Bữa ăn", emoji: "🌅" } });
-  const lunchTag = await prisma.tag.upsert({ where: { name: "Bữa trưa" }, update: {}, create: { name: "Bữa trưa", category: "Bữa ăn", emoji: "☀️" } });
-  const dinnerTag = await prisma.tag.upsert({ where: { name: "Bữa tối" }, update: {}, create: { name: "Bữa tối", category: "Bữa ăn", emoji: "🌙" } });
-  const mainDishTag = await prisma.tag.upsert({ where: { name: "Món mặn" }, update: {}, create: { name: "Món mặn", category: "Loại món", emoji: "🥘" } });
-  const soupTag = await prisma.tag.upsert({ where: { name: "Món canh" }, update: {}, create: { name: "Món canh", category: "Loại món", emoji: "🥣" } });
-  const vegetarianTag = await prisma.tag.upsert({ where: { name: "Món chay" }, update: {}, create: { name: "Món chay", category: "Loại món", emoji: "🥗" } });
-  const stirFriedTag = await prisma.tag.upsert({ where: { name: "Món xào" }, update: {}, create: { name: "Món xào", category: "Loại món", emoji: "🍳" } });
+
+  const egg = await getOrCreateIngredient("Trứng", "🥚");
+  const rice = await getOrCreateIngredient("Cơm nguội", "🍚");
+  const oil = await getOrCreateIngredient("Dầu ăn", "🛢️");
+  const pork = await getOrCreateIngredient("Thịt heo", "🥩");
+  const chicken = await getOrCreateIngredient("Thịt gà", "🍗");
+  const tomato = await getOrCreateIngredient("Cà chua", "🍅");
+  const onion = await getOrCreateIngredient("Hành tây", "🧅");
+  const garlic = await getOrCreateIngredient("Tỏi", "🧄");
+  const fishSauce = await getOrCreateIngredient("Nước mắm", "🍶");
+  const sugar = await getOrCreateIngredient("Đường", "🧂");
+  const beef = await getOrCreateIngredient("Thịt bò", "🥩");
+  const shrimp = await getOrCreateIngredient("Tôm", "🍤");
+  const waterSpinach = await getOrCreateIngredient("Rau muống", "🥬");
+  const potato = await getOrCreateIngredient("Khoai tây", "🥔");
+  const carrot = await getOrCreateIngredient("Cà rốt", "🥕");
+  const mushroom = await getOrCreateIngredient("Nấm", "🍄");
+  const ginger = await getOrCreateIngredient("Gừng", "🫚");
+  const scallion = await getOrCreateIngredient("Hành lá", "🌿");
+  const salt = await getOrCreateIngredient("Muối", "🧂");
+  const pepper = await getOrCreateIngredient("Tiêu", "🧂");
+
+  // Demo tags
+  const breakfastTag = await getOrCreateTag("Bữa sáng", "Bữa ăn", "🌅");
+  const lunchTag = await getOrCreateTag("Bữa trưa", "Bữa ăn", "☀️");
+  const dinnerTag = await getOrCreateTag("Bữa tối", "Bữa ăn", "🌙");
+  const mainDishTag = await getOrCreateTag("Món mặn", "Loại món", "🥘");
+  const soupTag = await getOrCreateTag("Món canh", "Loại món", "🥣");
+  const vegetarianTag = await getOrCreateTag("Món chay", "Loại món", "🥗");
+  const grilledTag = await getOrCreateTag("Món nướng", "Loại món", "🍢");
+  const stirFriedTag = await getOrCreateTag("Món xào", "Loại món", "🍳");
+  const snackTag = await getOrCreateTag("Ăn vặt", "Loại món", "🍟");
 
   // Demo recipes
   const recipe1 = await prisma.recipe.create({
@@ -256,6 +297,50 @@ async function main() {
         create: [{ recipeId: recipe2.recipeId }, { recipeId: recipe3.recipeId }],
       },
     },
+  });
+
+  await prisma.cookbook.create({
+    data: {
+      name: "Thực đơn chay thanh tịnh",
+      userId: user.userId,
+      cookbookRecipes: {
+        create: [{ recipeId: recipe6.recipeId }],
+      },
+    },
+  });
+
+  await prisma.cookbook.create({
+    data: {
+      name: "Tiệc cuối tuần",
+      userId: user.userId,
+      cookbookRecipes: {
+        create: [{ recipeId: recipe2.recipeId }, { recipeId: recipe4.recipeId }],
+      },
+    },
+  });
+
+  console.log("✅ Seed database thành công!");
+  console.log(`   - User: ${user.userId}`);
+  console.log(`   - Recipes: recipe1=${recipe1.recipeId}, recipe2=${recipe2.recipeId}, ...`);
+  console.log(`   - Cookbooks: 4 cookbooks đã được tạo`);
+  await prisma.cookbook.create({
+    data: {
+      name: "Công thức AI đầu tiên",
+      userId: user.userId,
+      cookbookRecipes: {
+        create: [{ recipeId: recipe1.recipeId }, { recipeId: recipe3.recipeId }],
+      },
+    },
+  });
+
+  await prisma.cookbook.create({
+    data: {
+      name: "Món ngon gia đình",
+      userId: user.userId,
+      cookbookRecipes: {
+        create: [{ recipeId: recipe2.recipeId }, { recipeId: recipe3.recipeId }],
+      },
+    }
   });
 
   await prisma.cookbook.create({
