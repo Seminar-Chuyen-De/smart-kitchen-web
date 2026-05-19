@@ -3,25 +3,30 @@ import { CreateUserInput, UpdateUserInput } from "@/backend/schemas/user.schema"
 
 export async function upsertUser(data: CreateUserInput) {
   return prisma.user.upsert({
-    where: { id: data.id },
+    where: { userId: data.userId },
     update: {
       email: data.email,
-      name: data.name,
+      username: data.username,
       avatarUrl: data.avatarUrl,
     },
-    create: data,
+    create: {
+      userId: data.userId,
+      email: data.email,
+      username: data.username,
+      avatarUrl: data.avatarUrl,
+    },
   });
 }
 
-export async function getUserById(id: string) {
+export async function getUserById(userId: string) {
   return prisma.user.findUnique({
-    where: { id },
+    where: { userId },
   });
 }
 
-export async function updateUser(id: string, data: UpdateUserInput) {
+export async function updateUser(userId: string, data: UpdateUserInput) {
   return prisma.user.update({
-    where: { id },
+    where: { userId },
     data,
   });
 }

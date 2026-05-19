@@ -13,18 +13,20 @@ export async function searchRecipes(
   const where: any = { userId };
 
   if (query) {
-    where.title = {
+    where.recipesName = {
       contains: query,
       mode: "insensitive",
     };
   }
 
   if (source) {
-    where.source = source;
+    where.sourceType = source;
   }
 
   if (cookbookId) {
-    where.cookbookId = cookbookId;
+    where.cookbookRecipes = {
+      some: { cookbookId: Number(cookbookId) },
+    };
   }
 
   return prisma.recipe.findMany({
