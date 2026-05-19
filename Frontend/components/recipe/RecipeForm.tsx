@@ -131,7 +131,7 @@ export function RecipeForm({ initialData, onSubmit, onCancel, isLoading = false 
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             placeholder="https://..."
-            type="url"
+            type="text"
           />
           {imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element
