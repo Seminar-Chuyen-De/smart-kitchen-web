@@ -117,7 +117,7 @@ model Step {
 // ================================
 model Ingredient {
   ingredientId Int      @id @default(autoincrement()) @map("ingredient_id")
-  name         String
+  name         String   @unique
   icon         String?
   bgColor      String?  @default("#F5F5F5") @map("bg_color")
   createdAt    DateTime @default(now()) @map("created_at")
@@ -153,7 +153,7 @@ model RecipeIngredient {
 // ================================
 model Tag {
   tagId     Int      @id @default(autoincrement()) @map("tag_id")
-  name      String
+  name      String   @unique
   category  String?
   emoji     String?
   createdAt DateTime @default(now()) @map("created_at")
