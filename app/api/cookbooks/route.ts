@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/backend/db/client";
-import { mapRecipeToFrontend } from "../recipes/route";
+import { mapRecipeToFrontend } from "@/backend/utils/recipe-mapper";
 
 // GET all cookbooks
 export async function GET() {
