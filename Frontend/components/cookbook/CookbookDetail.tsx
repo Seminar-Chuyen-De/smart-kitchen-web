@@ -23,18 +23,10 @@ export function CookbookDetail({ cookbookId }: CookbookDetailProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
-    fetchCookbooks();
-  }, [fetchCookbooks]);
-
-  useEffect(() => {
     const found = cookbooks.find((cb) => cb.cookbook_id === cookbookId);
     setCookbook(found ?? null);
     if (found) setNameInput(found.name);
   }, [cookbooks, cookbookId]);
-
-  useEffect(() => {
-    if (showAddModal) fetchRecipes();
-  }, [showAddModal, fetchRecipes]);
 
   if (!cookbook) {
     return (

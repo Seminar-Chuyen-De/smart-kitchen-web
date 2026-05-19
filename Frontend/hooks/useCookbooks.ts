@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Recipe } from "@/frontend/hooks/useRecipes";
 
 export interface Cookbook {
@@ -11,49 +11,33 @@ export interface Cookbook {
   _count?: { recipes: number };
 }
 
-// Mock data for dev
-const MOCK_COOKBOOKS: Cookbook[] = [
-  {
-    cookbook_id: 1,
-    name: "🍳 Bữa sáng nhanh",
-    created_at: new Date().toISOString(),
-    _count: { recipes: 5 },
-    recipes: [],
-  },
-  {
-    cookbook_id: 2,
-    name: "🥗 Ăn healthy",
-    created_at: new Date().toISOString(),
-    _count: { recipes: 3 },
-    recipes: [],
-  },
-  {
-    cookbook_id: 3,
-    name: "🍲 Món Việt truyền thống",
-    created_at: new Date().toISOString(),
-    _count: { recipes: 8 },
-    recipes: [],
-  },
-];
+// Remove mock data
 
 export function useCookbooks() {
-  const [cookbooks, setCookbooks] = useState<Cookbook[]>(MOCK_COOKBOOKS);
-  const [isLoading, setIsLoading] = useState(false);
+  const [cookbooks, setCookbooks] = useState<Cookbook[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCookbooks = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/cookbooks");
-      if (!res.ok) throw new Error("Không thể tải cookbook");
+      if (!res.ok) throw new Error("Không thể tải danh sách cookbook");
       const data: Cookbook[] = await res.json();
       setCookbooks(data);
-    } catch {
-      setError(null); // Keep mock in dev
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Lỗi tải cookbook";
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  // Auto-fetch on mount
+  useEffect(() => {
+    fetchCookbooks();
+  }, [fetchCookbooks]);
 
   const createCookbook = useCallback(async (name: string): Promise<Cookbook | null> => {
     try {

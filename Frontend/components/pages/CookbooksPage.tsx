@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, X, Check } from "lucide-react";
+import { Plus, X, Check, AlertCircle, RefreshCw } from "lucide-react";
 import { useCookbooks } from "@/frontend/hooks/useCookbooks";
 import { CookbookList } from "@/frontend/components/cookbook/CookbookList";
 import type { Cookbook } from "@/frontend/hooks/useCookbooks";
 
 export function CookbooksPage() {
-  const { cookbooks, isLoading, fetchCookbooks, createCookbook, updateCookbook, deleteCookbook } = useCookbooks();
+  const { cookbooks, isLoading, error, fetchCookbooks, createCookbook, updateCookbook, deleteCookbook } = useCookbooks();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newName, setNewName] = useState("");
   const [editTarget, setEditTarget] = useState<Cookbook | null>(null);
@@ -15,10 +15,7 @@ export function CookbooksPage() {
   const [deleteTarget, setDeleteTarget] = useState<Cookbook | null>(null);
   const [creating, setCreating] = useState(false);
 
-  useEffect(() => {
-    fetchCookbooks();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Hook tự fetch khi mount, không cần useEffect thêm ở đây
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
@@ -49,14 +46,37 @@ export function CookbooksPage() {
           <h1 className="text-3xl font-bold text-white">📚 Cookbook của tôi</h1>
           <p className="text-zinc-400 text-sm mt-1">{cookbooks.length} bộ sưu tập</p>
         </div>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="btn-primary flex items-center gap-2 text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Tạo Cookbook
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fetchCookbooks()}
+            title="Làm mới"
+            className="p-2 rounded-xl text-zinc-500 hover:text-white hover:bg-white/10 transition-all duration-200"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="btn-primary flex items-center gap-2 text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Tạo Cookbook
+          </button>
+        </div>
       </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="glass-card p-4 flex items-center gap-3 border-red-500/30 bg-red-500/10">
+          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+          <p className="text-sm text-red-300 flex-1">{error}</p>
+          <button
+            onClick={() => fetchCookbooks()}
+            className="text-xs text-red-400 hover:text-red-200 underline"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
 
       {/* Inline Create Form */}
       {showCreateForm && (
