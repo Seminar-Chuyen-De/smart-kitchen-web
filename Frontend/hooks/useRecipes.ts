@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 // --- Types ---
 export interface RecipeIngredient {
@@ -61,62 +61,10 @@ export interface CreateRecipeInput {
 
 export type UpdateRecipeInput = Partial<CreateRecipeInput>;
 
-// --- Mock data for dev before API is ready ---
-const MOCK_RECIPES: Recipe[] = [
-  {
-    recipe_id: 1,
-    recipes_name: "Cơm chiên dương châu",
-    description: "Cơm chiên thập cẩm với tôm, lạp xưởng, trứng và rau củ hấp dẫn.",
-    total_time: 20,
-    number_of_serves: 2,
-    calories: 520,
-    protein: 22,
-    carbs: 68,
-    fats: 14,
-    source_type: "AI_GENERATED",
-    tags: [{ tag_id: 1, name: "Cơm", emoji: "🍚" }, { tag_id: 2, name: "Nhanh", emoji: "⚡" }],
-    ingredients: [
-      { ingredient_id: 1, name: "Cơm nguội", quantity: 2, unit: "bát" },
-      { ingredient_id: 2, name: "Tôm", quantity: 100, unit: "g" },
-      { ingredient_id: 3, name: "Trứng gà", quantity: 2, unit: "quả" },
-    ],
-    steps: [
-      { step_id: 1, step_number: 1, instruction: "Làm nóng dầu ăn trong chảo lớn ở lửa vừa cao.", time: 2 },
-      { step_id: 2, step_number: 2, instruction: "Xào tôm và lạp xưởng cho đến khi chín.", time: 5 },
-      { step_id: 3, step_number: 3, instruction: "Cho cơm vào xào đều, thêm gia vị.", time: 8 },
-    ],
-    created_at: new Date().toISOString(),
-  },
-  {
-    recipe_id: 2,
-    recipes_name: "Canh chua cá lóc",
-    description: "Canh chua truyền thống miền Nam với cá lóc tươi và rau đậu bắp.",
-    total_time: 35,
-    number_of_serves: 4,
-    source_type: "MANUAL",
-    tags: [{ tag_id: 3, name: "Canh", emoji: "🍲" }],
-    ingredients: [],
-    steps: [],
-    created_at: new Date().toISOString(),
-  },
-  {
-    recipe_id: 3,
-    recipes_name: "Gỏi cuốn tôm thịt",
-    description: "Gỏi cuốn tươi mát với tôm, thịt, rau thơm và bún.",
-    total_time: 30,
-    number_of_serves: 3,
-    source_type: "AI_GENERATED",
-    tags: [{ tag_id: 4, name: "Gỏi", emoji: "🥗" }, { tag_id: 5, name: "Healthy", emoji: "💚" }],
-    ingredients: [],
-    steps: [],
-    created_at: new Date().toISOString(),
-  },
-];
-
 // --- Hook ---
 export function useRecipes() {
-  const [recipes, setRecipes] = useState<Recipe[]>(MOCK_RECIPES);
-  const [isLoading, setIsLoading] = useState(false);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [isLoading, setIsLoading] = useState(true); // true on mount so skeleton shows immediately
   const [error, setError] = useState<string | null>(null);
 
   const fetchRecipes = useCallback(async (query?: string) => {
@@ -130,13 +78,18 @@ export function useRecipes() {
       if (!res.ok) throw new Error("Không thể tải danh sách công thức");
       const data: Recipe[] = await res.json();
       setRecipes(data);
-    } catch {
-      // Keep mock data in dev, set error in prod
-      setError(null);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Lỗi tải công thức";
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  // Auto-fetch on mount
+  useEffect(() => {
+    fetchRecipes();
+  }, [fetchRecipes]);
 
   const createRecipe = useCallback(async (data: CreateRecipeInput): Promise<Recipe | null> => {
     try {
