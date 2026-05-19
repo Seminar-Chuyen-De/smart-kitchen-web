@@ -1,22 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Search, X } from "lucide-react";
+import { useState } from "react";
+import { Plus, Search, X, AlertCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRecipes } from "@/frontend/hooks/useRecipes";
 import { RecipeList } from "@/frontend/components/recipe/RecipeList";
 import type { Recipe } from "@/frontend/hooks/useRecipes";
 
 export function RecipesPage() {
-  const { recipes, isLoading, fetchRecipes, deleteRecipe } = useRecipes();
+  // Hook tự fetch khi mount, không cần useEffect thêm ở đây
+  const { recipes, isLoading, error, fetchRecipes, deleteRecipe } = useRecipes();
   const [search, setSearch] = useState("");
   const [filterSource, setFilterSource] = useState<string>("all");
   const [deleteTarget, setDeleteTarget] = useState<Recipe | null>(null);
-
-  useEffect(() => {
-    fetchRecipes();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const filtered = recipes.filter((r) => {
     const matchSearch = !search || r.recipes_name.toLowerCase().includes(search.toLowerCase());
@@ -40,13 +36,38 @@ export function RecipesPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white">📖 Công thức của tôi</h1>
-          <p className="text-zinc-400 text-sm mt-1">{recipes.length} công thức</p>
+          <p className="text-zinc-400 text-sm mt-1">
+            {isLoading ? "Đang tải..." : `${filtered.length} / ${recipes.length} công thức`}
+          </p>
         </div>
-        <Link href="/dashboard/recipes/new" className="btn-primary flex items-center gap-2 text-sm">
-          <Plus className="w-4 h-4" />
-          Tạo công thức
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fetchRecipes(search || undefined)}
+            title="Làm mới"
+            className="p-2 rounded-xl text-zinc-500 hover:text-white hover:bg-white/10 transition-all duration-200"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <Link href="/dashboard/recipes/new" className="btn-primary flex items-center gap-2 text-sm">
+            <Plus className="w-4 h-4" />
+            Tạo công thức
+          </Link>
+        </div>
       </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="glass-card p-4 flex items-center gap-3 border-red-500/30 bg-red-500/10">
+          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+          <p className="text-sm text-red-300 flex-1">{error}</p>
+          <button
+            onClick={() => fetchRecipes()}
+            className="text-xs text-red-400 hover:text-red-200 underline"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
 
       {/* Search & Filter */}
       <div className="flex gap-3 flex-wrap">

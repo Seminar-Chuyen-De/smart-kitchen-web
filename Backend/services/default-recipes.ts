@@ -271,84 +271,129 @@ const RECOMMENDED_RECIPES: DefaultRecipe[] = [
 export async function seedDefaultRecipesForUser(userId: string) {
   console.log(`🌱 Seeding 10 recommended recipes for user: ${userId}...`);
 
+  const seededRecipeIds: number[] = [];
+
   for (const recipe of RECOMMENDED_RECIPES) {
-    // 1. Resolve ingredients and create if missing
-    const recipeIngredientsData = [];
-    for (const ing of recipe.ingredients) {
-      let dbIng = await prisma.ingredient.findFirst({
-        where: { name: { equals: ing.name, mode: "insensitive" } }
-      });
-
-      if (!dbIng) {
-        dbIng = await prisma.ingredient.create({
-          data: {
-            name: ing.name,
-            icon: ing.icon || "🍳",
-            bgColor: "#F5F5F5"
-          }
+    try {
+      // 1. Resolve ingredients and create if missing
+      const recipeIngredientsData = [];
+      for (const ing of recipe.ingredients) {
+        let dbIng = await prisma.ingredient.findFirst({
+          where: { name: { equals: ing.name, mode: "insensitive" } }
         });
-      }
 
-      recipeIngredientsData.push({
-        ingredientId: dbIng.ingredientId,
-        quantity: ing.quantity || null,
-        unit: ing.unit || null
-      });
-    }
-
-    // 2. Resolve tags and create if missing
-    const recipeTagsData = [];
-    for (const tag of recipe.tags) {
-      let dbTag = await prisma.tag.findFirst({
-        where: { name: { equals: tag.name, mode: "insensitive" } }
-      });
-
-      if (!dbTag) {
-        dbTag = await prisma.tag.create({
-          data: {
-            name: tag.name,
-            category: tag.category || "Khác",
-            emoji: tag.emoji || "🏷️"
-          }
-        });
-      }
-
-      recipeTagsData.push({
-        tagId: dbTag.tagId
-      });
-    }
-
-    // 3. Create the recipe
-    await prisma.recipe.create({
-      data: {
-        userId,
-        recipesName: recipe.name,
-        description: recipe.description,
-        totalTime: recipe.totalTime,
-        numberOfServes: recipe.numberOfServes,
-        sourceType: recipe.sourceType,
-        steps: {
-          create: recipe.steps.map(s => ({
-            stepNumber: s.stepNumber,
-            instruction: s.instruction,
-            time: s.time || null
-          }))
-        },
-        recipeIngredients: {
-          create: recipeIngredientsData.map(ri => ({
-            ingredientId: ri.ingredientId,
-            quantity: ri.quantity,
-            unit: ri.unit
-          }))
-        },
-        recipeTags: {
-          create: recipeTagsData.map(rt => ({
-            tagId: rt.tagId
-          }))
+        if (!dbIng) {
+          dbIng = await prisma.ingredient.create({
+            data: {
+              name: ing.name,
+              icon: ing.icon || "🍳",
+              bgColor: "#F5F5F5"
+            }
+          });
         }
+
+        recipeIngredientsData.push({
+          ingredientId: dbIng.ingredientId,
+          quantity: ing.quantity ?? null,
+          unit: ing.unit ?? null
+        });
       }
-    });
+
+      // 2. Resolve tags and create if missing
+      const recipeTagsData = [];
+      for (const tag of recipe.tags) {
+        let dbTag = await prisma.tag.findFirst({
+          where: { name: { equals: tag.name, mode: "insensitive" } }
+        });
+
+        if (!dbTag) {
+          dbTag = await prisma.tag.create({
+            data: {
+              name: tag.name,
+              category: tag.category || "Khác",
+              emoji: tag.emoji || "🏷️"
+            }
+          });
+        }
+
+        recipeTagsData.push({ tagId: dbTag.tagId });
+      }
+
+      // 3. Create the recipe
+      const newRecipe = await prisma.recipe.create({
+        data: {
+          userId,
+          recipesName: recipe.name,
+          description: recipe.description,
+          totalTime: recipe.totalTime,
+          numberOfServes: recipe.numberOfServes,
+          sourceType: recipe.sourceType,
+          steps: {
+            create: recipe.steps.map(s => ({
+              stepNumber: s.stepNumber,
+              instruction: s.instruction,
+              time: s.time ?? null
+            }))
+          },
+          recipeIngredients: {
+            create: recipeIngredientsData.map(ri => ({
+              ingredientId: ri.ingredientId,
+              quantity: ri.quantity,
+              unit: ri.unit
+            }))
+          },
+          recipeTags: {
+            create: recipeTagsData.map(rt => ({
+              tagId: rt.tagId
+            }))
+          }
+        }
+      });
+
+      seededRecipeIds.push(newRecipe.recipeId);
+      console.log(`  ✓ Seeded: ${recipe.name}`);
+    } catch (err) {
+      // Không để 1 recipe lỗi block toàn bộ — bỏ qua và tiếp tục
+      console.warn(`  ⚠️ Skipped "${recipe.name}":`, err);
+    }
   }
 
-  console.log(`✅ Completed seeding recommended recipes for user: ${userId}`);
+  // 4. Tạo cookbook mặc định và gán TẤT CẢ công thức vừa seed vào đó
+  if (seededRecipeIds.length > 0) {
+    try {
+      // Tìm hoặc tạo cookbook mặc định
+      let defaultCookbook = await prisma.cookbook.findFirst({
+        where: { userId }
+      });
+
+      if (!defaultCookbook) {
+        defaultCookbook = await prisma.cookbook.create({
+          data: {
+            name: "📖 Công thức yêu thích",
+            userId
+          }
+        });
+      }
+
+      // Gán các recipe vừa seed vào cookbook (bỏ qua nếu đã tồn tại)
+      for (const recipeId of seededRecipeIds) {
+        try {
+          await prisma.cookbookRecipe.create({
+            data: {
+              cookbookId: defaultCookbook.cookbookId,
+              recipeId
+            }
+          });
+        } catch {
+          // Bỏ qua nếu đã tồn tại (unique constraint)
+        }
+      }
+
+      console.log(`  📚 Assigned ${seededRecipeIds.length} recipes to cookbook "${defaultCookbook.name}"`);
+    } catch (err) {
+      console.warn("  ⚠️ Could not create/assign default cookbook:", err);
+    }
+  }
+
+  console.log(`✅ Completed seeding ${seededRecipeIds.length}/${RECOMMENDED_RECIPES.length} recipes for user: ${userId}`);
 }
