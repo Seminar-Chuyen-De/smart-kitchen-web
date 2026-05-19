@@ -1,9 +1,6 @@
 {
-  "/api/recipes/route": "app/api/recipes/route.js",
-  "/api/recipes/[id]/route": "app/api/recipes/[id]/route.js",
-  "/dashboard/recipes/[id]/page": "app/dashboard/recipes/[id]/page.js",
   "/dashboard/recipes/page": "app/dashboard/recipes/page.js",
   "/dashboard/recipes/new/page": "app/dashboard/recipes/new/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/cookbooks/page": "app/dashboard/cookbooks/page.js"
+  "/dashboard/recipes/[id]/page": "app/dashboard/recipes/[id]/page.js"
 }
