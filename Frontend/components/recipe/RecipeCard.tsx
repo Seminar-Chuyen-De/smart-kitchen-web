@@ -35,6 +35,7 @@ export function RecipeCardSkeleton() {
 
 export function RecipeCard({ recipe, onEdit, onDelete, onAddToCookbook }: RecipeCardProps) {
   const src = recipe.source_type ? sourceConfig[recipe.source_type] : sourceConfig.MANUAL;
+  const isAI = recipe.source_type === "AI_GENERATED";
   const maxTags = 3;
   const visibleTags = recipe.tags?.slice(0, maxTags) ?? [];
   const extraTagCount = (recipe.tags?.length ?? 0) - maxTags;
@@ -63,9 +64,15 @@ export function RecipeCard({ recipe, onEdit, onDelete, onAddToCookbook }: Recipe
       <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         {onEdit && (
           <button
-            onClick={onEdit}
-            className="w-8 h-8 rounded-lg bg-zinc-900/90 backdrop-blur border border-zinc-700 flex items-center justify-center hover:bg-zinc-800 hover:text-brand-300 text-zinc-400 transition-colors"
-            title="Chỉnh sửa"
+            onClick={isAI ? undefined : onEdit}
+            disabled={isAI}
+            className={`w-8 h-8 rounded-lg bg-zinc-900/90 backdrop-blur border border-zinc-700
+              flex items-center justify-center text-zinc-400 transition-colors
+              ${isAI
+                ? "opacity-40 cursor-not-allowed"
+                : "hover:bg-zinc-800 hover:text-brand-300 cursor-pointer"
+              }`}
+            title={isAI ? "Không thể chỉnh sửa công thức AI" : "Chỉnh sửa công thức"}
           >
             <Edit2 className="w-3.5 h-3.5" />
           </button>

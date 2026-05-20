@@ -59,7 +59,10 @@ export interface CreateRecipeInput {
   source_type?: Recipe["source_type"];
 }
 
-export type UpdateRecipeInput = Partial<CreateRecipeInput>;
+export type UpdateRecipeInput = Partial<CreateRecipeInput> & {
+  ingredients?: { ingredient_id?: number; name: string; quantity: string; unit: string; note: string }[];
+  steps?: { instruction: string; tip: string; time: string }[];
+};
 
 // --- Hook ---
 export function useRecipes() {
@@ -116,19 +119,61 @@ export function useRecipes() {
   }, []);
 
   const updateRecipe = useCallback(async (id: number, data: UpdateRecipeInput): Promise<void> => {
-    // Optimistic update
+    // Optimistic update — chỉ spread metadata, KHÔNG spread ingredients/steps
+    // vì shape của chúng khác với RecipeIngredient[] trong state
+    const { ingredients: _ing, steps: _steps, ...metadataOnly } = data;
     setRecipes((prev) =>
-      prev.map((r) => (r.recipe_id === id ? { ...r, ...data } : r))
+      prev.map((r) => (r.recipe_id === id ? { ...r, ...metadataOnly } : r))
     );
+
+    // Map sang camelCase + kiểu số để phù hợp với Backend schema
+    const apiPayload: Record<string, unknown> = {
+      recipesName:    data.recipes_name,
+      description:    data.description,
+      imageRecipe:    data.image_recipe,
+      totalTime:      data.total_time,
+      numberOfServes: data.number_of_serves,
+      calories:       data.calories,
+      protein:        data.protein,
+      carbs:          data.carbs,
+      fats:           data.fats,
+    };
+
+    // Map ingredients — chỉ những ingredient đã có ingredient_id
+    if (data.ingredients) {
+      const mapped = data.ingredients
+        .filter((i) => i.name.trim() && i.ingredient_id)
+        .map((i) => ({
+          ingredientId: i.ingredient_id!,
+          quantity: i.quantity ? Number(i.quantity) : undefined,
+          unit: i.unit || undefined,
+          note: i.note || undefined,
+        }));
+      if (mapped.length > 0) apiPayload.ingredients = mapped;
+    }
+
+    // Map steps — thêm stepNumber và parse time thành number
+    if (data.steps) {
+      const mapped = data.steps
+        .filter((s) => s.instruction.trim())
+        .map((s, idx) => ({
+          stepNumber:  idx + 1,
+          instruction: s.instruction,
+          tip:         s.tip || undefined,
+          time:        s.time ? Number(s.time) : undefined,
+        }));
+      if (mapped.length > 0) apiPayload.steps = mapped;
+    }
+
     try {
       const res = await fetch(`/api/recipes/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(apiPayload),
       });
       if (!res.ok) throw new Error("Cập nhật thất bại");
     } catch {
-      // Rollback on error (simplified — re-fetch in prod)
+      // Rollback — re-fetch nếu cần
     }
   }, []);
 

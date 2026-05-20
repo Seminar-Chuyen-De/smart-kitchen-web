@@ -56,14 +56,29 @@ export function RecipeDetail({ recipe, onEdit, onDelete, onAddToCookbook }: Reci
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      {/* Back */}
-      <Link
-        href="/dashboard/recipes"
-        className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors group"
-      >
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        Quay lại danh sách
-      </Link>
+      {/* Navigation row: Back ↔ Edit */}
+      <div className="flex items-center justify-between">
+        <Link
+          href="/dashboard/recipes"
+          className="inline-flex items-center gap-2 text-sm text-brand-500 bg-brand-500/20
+            hover:text-white hover:bg-white/10 rounded-xl px-3 py-1.5 transition-colors group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          Quay lại danh sách
+        </Link>
+
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            className="inline-flex items-center gap-2 text-sm text-brand-400 bg-brand-500/10
+              hover:text-white hover:bg-brand-500/20 border border-brand-500/30 rounded-xl
+              px-3 py-1.5 transition-colors group"
+          >
+            <Edit2 className="w-4 h-4" />
+            Chỉnh sửa công thức
+          </button>
+        )}
+      </div>
 
       {/* Hero Image */}
       <div className="relative h-64 sm:h-80 rounded-2xl overflow-hidden bg-gradient-to-br from-brand-900/50 via-zinc-800 to-zinc-900">
