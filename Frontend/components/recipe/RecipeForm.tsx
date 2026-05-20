@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import type { Recipe, CreateRecipeInput } from "@/frontend/hooks/useRecipes";
 
-type FormIngredient = { name: string; quantity: string; unit: string; note: string };
+type FormIngredient = { ingredient_id?: number; name: string; quantity: string; unit: string; note: string };
 type FormStep = { instruction: string; tip: string; time: string };
 
 interface RecipeFormProps {
@@ -12,6 +12,7 @@ interface RecipeFormProps {
   onSubmit: (data: CreateRecipeInput & { ingredients: FormIngredient[]; steps: FormStep[] }) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  submitLabel?: string;
 }
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
@@ -36,7 +37,7 @@ function TextInput({ id, value, onChange, placeholder, type = "text", ...rest }:
   );
 }
 
-export function RecipeForm({ initialData, onSubmit, onCancel, isLoading = false }: RecipeFormProps) {
+export function RecipeForm({ initialData, onSubmit, onCancel, isLoading = false, submitLabel }: RecipeFormProps) {
   const [name, setName] = useState(initialData?.recipes_name ?? "");
   const [description, setDescription] = useState(initialData?.description ?? "");
   const [imageUrl, setImageUrl] = useState(initialData?.image_recipe ?? "");
@@ -47,10 +48,29 @@ export function RecipeForm({ initialData, onSubmit, onCancel, isLoading = false 
   const [carbs, setCarbs] = useState(String(initialData?.carbs ?? ""));
   const [fats, setFats] = useState(String(initialData?.fats ?? ""));
 
-  const [ingredients, setIngredients] = useState<FormIngredient[]>([
-    { name: "", quantity: "", unit: "", note: "" },
-  ]);
-  const [steps, setSteps] = useState<FormStep[]>([{ instruction: "", tip: "", time: "" }]);
+  const [ingredients, setIngredients] = useState<FormIngredient[]>(() => {
+    if (initialData?.ingredients && initialData.ingredients.length > 0) {
+      return initialData.ingredients.map((ing) => ({
+        ingredient_id: ing.ingredient_id,  // preserve ID để map sang ingredientId khi update
+        name: ing.name ?? "",
+        quantity: String(ing.quantity ?? ""),
+        unit: ing.unit ?? "",
+        note: ing.note ?? "",
+      }));
+    }
+    return [{ name: "", quantity: "", unit: "", note: "" }];
+  });
+
+  const [steps, setSteps] = useState<FormStep[]>(() => {
+    if (initialData?.steps && initialData.steps.length > 0) {
+      return initialData.steps.map((s) => ({
+        instruction: s.instruction ?? "",
+        tip: s.tip ?? "",
+        time: String(s.time ?? ""),
+      }));
+    }
+    return [{ instruction: "", tip: "", time: "" }];
+  });
 
   const addIngredient = useCallback(() => {
     setIngredients((prev) => [...prev, { name: "", quantity: "", unit: "", note: "" }]);
@@ -277,7 +297,7 @@ export function RecipeForm({ initialData, onSubmit, onCancel, isLoading = false 
       {/* Actions */}
       <div className="flex gap-3 pb-8">
         <button type="submit" disabled={isLoading || !name.trim()} className="btn-primary flex-1">
-          {isLoading ? "Đang lưu..." : "💾 Lưu công thức"}
+          {isLoading ? "Đang lưu..." : (submitLabel ?? "💾 Lưu công thức")}
         </button>
         <button type="button" onClick={onCancel} className="btn-ghost">
           Hủy

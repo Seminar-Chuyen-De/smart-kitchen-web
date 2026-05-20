@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Search, X, AlertCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRecipes } from "@/frontend/hooks/useRecipes";
@@ -8,11 +9,13 @@ import { RecipeList } from "@/frontend/components/recipe/RecipeList";
 import type { Recipe } from "@/frontend/hooks/useRecipes";
 
 export function RecipesPage() {
+  const router = useRouter();
   // Hook tự fetch khi mount, không cần useEffect thêm ở đây
   const { recipes, isLoading, error, fetchRecipes, deleteRecipe } = useRecipes();
   const [search, setSearch] = useState("");
   const [filterSource, setFilterSource] = useState<string>("all");
   const [deleteTarget, setDeleteTarget] = useState<Recipe | null>(null);
+  const [editTarget, setEditTarget] = useState<Recipe | null>(null);
 
   const filtered = recipes.filter((r) => {
     const matchSearch = !search || r.recipes_name.toLowerCase().includes(search.toLowerCase());
@@ -28,6 +31,18 @@ export function RecipesPage() {
     if (!deleteTarget) return;
     await deleteRecipe(deleteTarget.recipe_id);
     setDeleteTarget(null);
+  };
+
+  const handleEdit = (recipe: Recipe) => {
+    if (recipe.source_type === "AI_GENERATED") return; // guard
+    setEditTarget(recipe);
+  };
+
+  const confirmEdit = () => {
+    if (!editTarget) return;
+    const id = editTarget.recipe_id;
+    setEditTarget(null);
+    router.push(`/dashboard/recipes/${id}/edit`);
   };
 
   return (
@@ -94,7 +109,7 @@ export function RecipesPage() {
           <option value="all">Tất cả nguồn</option>
           <option value="AI_GENERATED">🤖 AI Generated</option>
           <option value="MANUAL">✏️ Thủ công</option>
-          <option value="IMPORTED">📥 Imported</option>
+          {/* <option value="IMPORTED">📥 Imported</option> */}
         </select>
       </div>
 
@@ -102,12 +117,13 @@ export function RecipesPage() {
       <RecipeList
         recipes={filtered}
         isLoading={isLoading}
+        onEdit={handleEdit}
         onDelete={handleDelete}
       />
 
       {/* Delete Confirm Dialog */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">  
           <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm" onClick={() => setDeleteTarget(null)} />
           <div className="relative glass-card p-6 max-w-sm w-full space-y-4">
             <h3 className="font-semibold text-white text-lg">Xóa công thức?</h3>
@@ -122,6 +138,35 @@ export function RecipesPage() {
                 Xóa
               </button>
               <button onClick={() => setDeleteTarget(null)} className="btn-ghost text-sm">
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Confirm Dialog */}
+      {editTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm"
+            onClick={() => setEditTarget(null)}
+          />
+          <div className="relative glass-card p-6 max-w-sm w-full space-y-4">
+            <h3 className="font-semibold text-white text-lg">✏️ Chỉnh sửa công thức?</h3>
+            <p className="text-zinc-400 text-sm">
+              Bạn có muốn chỉnh sửa công thức{" "}
+              <span className="text-white font-medium">"{editTarget.recipes_name}"</span>?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={confirmEdit}
+                className="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white
+                  rounded-xl text-sm font-medium transition-colors"
+              >
+                ✏️ Chỉnh sửa
+              </button>
+              <button onClick={() => setEditTarget(null)} className="btn-ghost text-sm">
                 Hủy
               </button>
             </div>

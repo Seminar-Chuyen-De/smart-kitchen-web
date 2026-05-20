@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { RecipeDetail, RecipeDetailSkeleton } from "@/frontend/components/recipe/RecipeDetail";
 import type { Recipe } from "@/frontend/hooks/useRecipes";
 
@@ -41,9 +42,11 @@ interface RecipeDetailPageProps {
 }
 
 export function RecipeDetailPage({ recipeId }: RecipeDetailPageProps) {
+  const router = useRouter();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showEditConfirm, setShowEditConfirm] = useState(false);
 
   useEffect(() => {
     const loadRecipe = async () => {
@@ -80,5 +83,56 @@ export function RecipeDetailPage({ recipeId }: RecipeDetailPageProps) {
     );
   }
 
-  return <RecipeDetail recipe={recipe} />;
+  // Chỉ cho phép sửa công thức MANUAL
+  const isEditable = recipe.source_type === "MANUAL";
+
+  const handleEditClick = () => {
+    setShowEditConfirm(true);
+  };
+
+  const confirmEdit = () => {
+    setShowEditConfirm(false);
+    router.push(`/dashboard/recipes/${recipeId}/edit`);
+  };
+
+  return (
+    <>
+      <RecipeDetail
+        recipe={recipe}
+        onEdit={isEditable ? handleEditClick : undefined}
+      />
+
+      {/* Confirm Edit Dialog */}
+      {showEditConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm"
+            onClick={() => setShowEditConfirm(false)}
+          />
+          <div className="relative glass-card p-6 max-w-sm w-full space-y-4">
+            <h3 className="font-semibold text-white text-lg">✏️ Chỉnh sửa công thức?</h3>
+            <p className="text-zinc-400 text-sm">
+              Bạn có muốn chỉnh sửa công thức{" "}
+              <span className="text-white font-medium">"{recipe.recipes_name}"</span>?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={confirmEdit}
+                className="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white
+                  rounded-xl text-sm font-medium transition-colors"
+              >
+                ✏️ Chỉnh sửa
+              </button>
+              <button
+                onClick={() => setShowEditConfirm(false)}
+                className="btn-ghost text-sm"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
