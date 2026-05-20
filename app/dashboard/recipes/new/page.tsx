@@ -30,7 +30,7 @@ export default function Page() {
       <div>
         <button
           onClick={() => router.back()}
-          className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors group mb-4"
+          className="inline-flex items-center gap-2 text-sm text-brand-500 bg-brand-500/20 hover:text-white hover:bg-white/10 rounded-xl px-2 py-1 transition-colors group mb-4"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Quay lại
