@@ -1,9 +1,12 @@
 {
-  "/api/cookbooks/route": "app/api/cookbooks/route.js",
+  "/sign-up/[[...sign-up]]/page": "app/sign-up/[[...sign-up]]/page.js",
+  "/sign-in/[[...sign-in]]/page": "app/sign-in/[[...sign-in]]/page.js",
   "/api/recipes/route": "app/api/recipes/route.js",
+  "/api/cookbooks/route": "app/api/cookbooks/route.js",
+  "/api/cookbooks/[id]/recipes/route": "app/api/cookbooks/[id]/recipes/route.js",
+  "/api/cookbooks/[id]/route": "app/api/cookbooks/[id]/route.js",
   "/dashboard/recipes/page": "app/dashboard/recipes/page.js",
+  "/dashboard/scan/page": "app/dashboard/scan/page.js",
   "/dashboard/cookbooks/page": "app/dashboard/cookbooks/page.js",
-  "/dashboard/recipes/[id]/page": "app/dashboard/recipes/[id]/page.js",
-  "/dashboard/cookbooks/[id]/page": "app/dashboard/cookbooks/[id]/page.js",
-  "/dashboard/recipes/new/page": "app/dashboard/recipes/new/page.js"
+  "/dashboard/cookbooks/[id]/page": "app/dashboard/cookbooks/[id]/page.js"
 }

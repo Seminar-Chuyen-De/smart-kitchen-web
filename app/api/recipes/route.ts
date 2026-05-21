@@ -59,6 +59,8 @@ export async function POST(req: Request) {
 
     // Tự động giải quyết nguyên liệu theo tên hoặc đối tượng từ Frontend gửi lên
     const recipeIngredients: any[] = [];
+    const seenIngredientIds = new Set<number>();
+    
     if (body.ingredients && Array.isArray(body.ingredients)) {
       for (const ing of body.ingredients) {
         if (typeof ing === "string" || (typeof ing === "object" && ing && ing.name)) {
@@ -81,6 +83,9 @@ export async function POST(req: Request) {
             });
           }
 
+          if (seenIngredientIds.has(dbIngredient.ingredientId)) continue;
+          seenIngredientIds.add(dbIngredient.ingredientId);
+
           const qtyVal = typeof ing === "object" && ing.quantity !== undefined && ing.quantity !== "" && ing.quantity !== null
             ? Number(ing.quantity)
             : null;
@@ -92,12 +97,16 @@ export async function POST(req: Request) {
             note: typeof ing === "object" && ing.note && ing.note.trim() !== "" ? ing.note.trim() : null
           });
         } else if (typeof ing === "object" && ing && ing.ingredientId) {
+          const ingId = Number(ing.ingredientId);
+          if (seenIngredientIds.has(ingId)) continue;
+          seenIngredientIds.add(ingId);
+
           const qtyVal = ing.quantity !== undefined && ing.quantity !== "" && ing.quantity !== null
             ? Number(ing.quantity)
             : null;
 
           recipeIngredients.push({
-            ingredientId: Number(ing.ingredientId),
+            ingredientId: ingId,
             quantity: qtyVal !== null && !isNaN(qtyVal) ? qtyVal : null,
             unit: ing.unit && ing.unit.trim() !== "" ? ing.unit.trim() : null,
             note: ing.note && ing.note.trim() !== "" ? ing.note.trim() : null
@@ -108,24 +117,31 @@ export async function POST(req: Request) {
 
     // Tự động giải quyết các bước thực hiện
     const steps: any[] = [];
+    
+    // Xử lý instructions (từ AI)
     if (body.instructions && Array.isArray(body.instructions)) {
-      body.instructions.forEach((inst: string, idx: number) => {
-        if (typeof inst === "string" && inst.trim() !== "") {
+      body.instructions.forEach((inst: any, idx: number) => {
+        const text = typeof inst === "string" ? inst : (inst.instruction || inst.text || inst.step);
+        if (text && typeof text === "string" && text.trim() !== "") {
           steps.push({
-            stepNumber: idx + 1,
-            instruction: inst.trim(),
-            tip: null,
-            time: null
+            stepNumber: inst.stepNumber || idx + 1,
+            instruction: text.trim(),
+            tip: inst.tip || null,
+            time: inst.time ? Number(inst.time) : null
           });
         }
       });
-    } else if (body.steps && Array.isArray(body.steps)) {
+    } 
+    
+    // Xử lý steps (từ Manual Form) - Dùng chung nếu instructions rỗng hoặc không có
+    if (steps.length === 0 && body.steps && Array.isArray(body.steps)) {
       body.steps.forEach((step: any, idx: number) => {
-        if (step && step.instruction && step.instruction.trim() !== "") {
+        const text = typeof step === "string" ? step : (step.instruction || step.text);
+        if (text && typeof text === "string" && text.trim() !== "") {
           const timeVal = step.time !== undefined && step.time !== "" && step.time !== null ? Number(step.time) : null;
           steps.push({
-            stepNumber: step.stepNumber || (idx + 1),
-            instruction: step.instruction.trim(),
+            stepNumber: step.stepNumber || step.step_number || (idx + 1),
+            instruction: text.trim(),
             tip: step.tip && step.tip.trim() !== "" ? step.tip.trim() : null,
             time: timeVal !== null && !isNaN(timeVal) ? timeVal : null
           });

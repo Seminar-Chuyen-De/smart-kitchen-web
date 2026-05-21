@@ -3,10 +3,11 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/backend/db/client";
 
 // POST add recipe to cookbook
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { id } = await params;
 
     const body = await req.json();
     if (!body.recipeId) {
@@ -15,7 +16,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     // Verify ownership of the cookbook
     const cookbook = await prisma.cookbook.findFirst({
-      where: { cookbookId: Number(params.id), userId }
+      where: { cookbookId: Number(id), userId }
     });
     if (!cookbook) {
       return NextResponse.json({ error: "Cookbook not found" }, { status: 404 });
@@ -24,7 +25,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     const linked = await prisma.cookbookRecipe.create({
       data: {
         recipeId: Number(body.recipeId),
-        cookbookId: Number(params.id)
+        cookbookId: Number(id)
       }
     });
 
@@ -36,10 +37,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 }
 
 // DELETE remove recipe from cookbook
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { id } = await params;
 
     const body = await req.json();
     if (!body.recipeId) {
@@ -48,7 +50,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 
     // Verify ownership of the cookbook
     const cookbook = await prisma.cookbook.findFirst({
-      where: { cookbookId: Number(params.id), userId }
+      where: { cookbookId: Number(id), userId }
     });
     if (!cookbook) {
       return NextResponse.json({ error: "Cookbook not found" }, { status: 404 });
@@ -58,7 +60,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       where: {
         recipeId_cookbookId: {
           recipeId: Number(body.recipeId),
-          cookbookId: Number(params.id)
+          cookbookId: Number(id)
         }
       }
     });

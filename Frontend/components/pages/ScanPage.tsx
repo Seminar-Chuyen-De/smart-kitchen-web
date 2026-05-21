@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { AlertCircle, RefreshCcw } from "lucide-react";
 import { useScan } from "@/frontend/hooks/useScan";
 import { ImageUploader } from "@/frontend/components/ai/ImageUploader";
@@ -8,6 +8,7 @@ import { ScanResultCard, ScanResultSkeleton } from "@/frontend/components/ai/Sca
 
 export function ScanPage() {
   const { previewUrl, status, result, error, uploadAndScan, reset } = useScan();
+  const [isEditingResult, setIsEditingResult] = useState(false);
 
   const handleFileSelect = useCallback(
     (file: File) => {
@@ -16,7 +17,24 @@ export function ScanPage() {
     [uploadAndScan]
   );
 
+  const handleReset = useCallback(() => {
+    setIsEditingResult(false);
+    reset();
+  }, [reset]);
+
   const isLoading = status === "uploading" || status === "scanning";
+  const isDone = status === "done" && result != null;
+
+  // Layout logic:
+  // - idle/error: single column (uploader centered)
+  // - loading/done (preview mode): 2 columns (uploader | result)
+  // - done (edit mode): single column (uploader hidden, form full-width)
+  const showUploader = !isEditingResult;
+  const layoutClass = isEditingResult
+    ? "grid-cols-1 max-w-2xl mx-auto w-full"
+    : (isLoading || isDone)
+      ? "lg:grid-cols-2"
+      : "grid-cols-1 max-w-xl mx-auto w-full";
 
   return (
     <div className="space-y-8">
@@ -34,7 +52,7 @@ export function ScanPage() {
           {[
             { step: "1", icon: "📸", label: "Upload ảnh nguyên liệu" },
             { step: "2", icon: "🤖", label: "AI nhận diện & tạo công thức" },
-            { step: "3", icon: "💾", label: "Lưu vào Cookbook của bạn" },
+            { step: "3", icon: "💾", label: "Chỉnh sửa & lưu vào Cookbook" },
           ].map(({ step, icon, label }) => (
             <div key={step} className="glass-card p-4 text-center space-y-2">
               <span className="text-2xl">{icon}</span>
@@ -45,20 +63,26 @@ export function ScanPage() {
       )}
 
       {/* Main Content */}
-      <div className={`grid gap-8 ${(isLoading || status === "done") ? "lg:grid-cols-2" : "grid-cols-1 max-w-xl mx-auto w-full"}`}>
-        {/* Left: Uploader */}
-        <ImageUploader
-          status={status}
-          previewUrl={previewUrl || null}
-          onFileSelect={handleFileSelect}
-          onReset={reset}
-        />
+      <div className={`grid gap-8 ${layoutClass}`}>
+        {/* Left: Uploader — hidden when editing */}
+        {showUploader && (
+          <ImageUploader
+            status={status}
+            previewUrl={previewUrl || null}
+            onFileSelect={handleFileSelect}
+            onReset={handleReset}
+          />
+        )}
 
         {/* Right: Result / Skeleton */}
         {isLoading && <ScanResultSkeleton />}
 
-        {status === "done" && result && (
-          <ScanResultCard result={result} onReset={reset} />
+        {isDone && (
+          <ScanResultCard
+            result={result}
+            onReset={handleReset}
+            onEditingChange={setIsEditingResult}
+          />
         )}
 
         {/* Error */}
@@ -71,7 +95,7 @@ export function ScanPage() {
               <p className="font-semibold text-white">Scan thất bại</p>
               <p className="text-sm text-zinc-400 mt-1">{error}</p>
             </div>
-            <button onClick={reset} className="btn-ghost flex items-center gap-2 text-sm">
+            <button onClick={handleReset} className="btn-ghost flex items-center gap-2 text-sm">
               <RefreshCcw className="w-4 h-4" />
               Thử lại
             </button>

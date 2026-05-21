@@ -2,13 +2,19 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { RefreshCcw, Save, Clock, Users, ChevronRight } from "lucide-react";
+import { RefreshCcw, Save, Clock, Users, ChevronRight, Edit2 } from "lucide-react";
 import type { ScanResult } from "@/frontend/hooks/useScan";
+import { RecipeForm } from "@/frontend/components/recipe/RecipeForm";
+import type { CreateRecipeInput, Recipe } from "@/frontend/hooks/useRecipes";
 
 interface ScanResultCardProps {
   result: ScanResult;
   onReset: () => void;
+  onEditingChange?: (isEditing: boolean) => void;
 }
+
+type FormIngredient = { ingredient_id?: number; name: string; quantity: string; unit: string; note: string };
+type FormStep = { instruction: string; tip: string; time: string };
 
 // Skeleton shown while scanning
 export function ScanResultSkeleton() {
@@ -39,14 +45,56 @@ export function ScanResultSkeleton() {
   );
 }
 
-export function ScanResultCard({ result, onReset }: ScanResultCardProps) {
+/**
+ * Map AI scan data (string arrays) → RecipeForm's Partial<Recipe> initialData shape.
+ * - ingredients: string[] → RecipeIngredient[] (only `name` is available from AI scan)
+ * - instructions: string[] → Step[] (only `instruction` is available)
+ */
+function buildFormInitialData(recipe: ScanResult["recipe"]): Partial<Recipe> {
+  return {
+    recipes_name: recipe.title,
+    description: recipe.description,
+    image_recipe: recipe.image_recipe,
+    total_time: recipe.cookTime,
+    number_of_serves: recipe.servings,
+    source_type: "AI_GENERATED",
+    ingredients: recipe.ingredients.map((name, i) => ({
+      ingredient_id: i, // placeholder id (form uses it as a key only)
+      name,
+      quantity: undefined,
+      unit: undefined,
+      note: undefined,
+    })),
+    steps: recipe.instructions.map((instruction, i) => ({
+      step_id: i,
+      step_number: i + 1,
+      instruction,
+      tip: undefined,
+      time: undefined,
+    })),
+  };
+}
+
+export function ScanResultCard({ result, onReset, onEditingChange }: ScanResultCardProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const { recipe } = result;
 
-  const handleSave = async () => {
+  const handleEditClick = () => {
+    setIsEditing(true);
+    onEditingChange?.(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    onEditingChange?.(false);
+  };
+
+  // Quick-save: POST AI data as-is (original flow, no editing)
+  const handleQuickSave = async () => {
     setSaving(true);
     try {
       const res = await fetch("/api/recipes", {
@@ -76,6 +124,91 @@ export function ScanResultCard({ result, onReset }: ScanResultCardProps) {
     }
   };
 
+  // Form-save: POST edited data from RecipeForm (after user edits)
+  const handleFormSubmit = async (
+    data: CreateRecipeInput & { ingredients?: FormIngredient[]; steps?: FormStep[] }
+  ) => {
+    setSaving(true);
+    try {
+      const payload = {
+        recipes_name: data.recipes_name,
+        description: data.description,
+        total_time: data.total_time ? Number(data.total_time) : undefined,
+        number_of_serves: data.number_of_serves ? Number(data.number_of_serves) : undefined,
+        source_type: "AI_GENERATED",
+        image_recipe: data.image_recipe,
+        ingredients: (data.ingredients || [])
+          .filter((i) => i.name.trim())
+          .map((i) => ({
+            name: i.name,
+            quantity: i.quantity ? Number(i.quantity) : undefined,
+            unit: i.unit || undefined,
+            note: i.note || undefined,
+          })),
+        steps: (data.steps || [])
+          .filter((s) => s.instruction.trim())
+          .map((s, idx) => ({
+            step_number: idx + 1,
+            instruction: s.instruction,
+            tip: s.tip || undefined,
+            time: s.time ? Number(s.time) : undefined,
+          })),
+      };
+
+      const res = await fetch("/api/recipes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      
+      if (res.ok) {
+        const saved = await res.json();
+        setSaved(true);
+        setTimeout(() => router.push(`/dashboard/recipes/${saved.recipe_id}`), 800);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        console.error("Save recipe failed:", errData);
+        alert(`Lỗi lưu công thức: ${JSON.stringify(errData.error || "Không xác định")}`);
+        setSaving(false);
+      }
+    } catch (error) {
+      console.error("Network or parsing error:", error);
+      alert("Đã xảy ra lỗi mạng khi lưu công thức.");
+      setSaving(false);
+    }
+  };
+
+  // ── Edit mode: show RecipeForm pre-filled with AI data ──
+  if (isEditing) {
+    return (
+      <div className="space-y-4">
+        {/* Edit mode header */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/30 text-brand-300 text-xs font-medium">
+            ✏️ Đang chỉnh sửa kết quả AI
+          </span>
+          <span className="text-zinc-500 text-xs">Chỉnh sửa rồi nhấn &ldquo;Lưu công thức&rdquo;</span>
+        </div>
+
+        {saving && (
+          <div className="glass-card p-3 flex items-center gap-2 text-sm text-brand-300 border border-brand-500/30">
+            <span className="w-4 h-4 border-2 border-brand-400 border-t-transparent rounded-full animate-spin inline-block" />
+            Đang lưu công thức...
+          </div>
+        )}
+
+        <RecipeForm
+          initialData={buildFormInitialData(recipe)}
+          onSubmit={handleFormSubmit}
+          onCancel={handleCancelEdit}
+          isLoading={saving}
+          submitLabel="💾 Lưu công thức"
+        />
+      </div>
+    );
+  }
+
+  // ── Preview mode: show scan result card + action buttons ──
   return (
     <div className="glass-card p-6 space-y-6">
       {/* Badge */}
@@ -144,16 +277,31 @@ export function ScanResultCard({ result, onReset }: ScanResultCardProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-3 pt-2 flex-wrap">
+        {/* Primary CTA: Edit then save */}
         <button
-          onClick={handleSave}
-          disabled={saving || saved}
+          id="scan-edit-btn"
+          onClick={handleEditClick}
           className="btn-primary flex items-center gap-2 flex-1 justify-center"
         >
-          <Save className="w-4 h-4" />
-          {saved ? "✅ Đã lưu!" : saving ? "Đang lưu..." : "Lưu vào Cookbook"}
+          <Edit2 className="w-4 h-4" />
+          Chỉnh sửa &amp; Lưu
         </button>
+
+        {/* Quick-save without editing */}
         <button
+          id="scan-quick-save-btn"
+          onClick={handleQuickSave}
+          disabled={saving || saved}
+          className="btn-ghost flex items-center gap-2"
+        >
+          <Save className="w-4 h-4" />
+          {saved ? "✅ Đã lưu!" : saving ? "Đang lưu..." : "Lưu nhanh"}
+        </button>
+
+        {/* Reset */}
+        <button
+          id="scan-reset-btn"
           onClick={onReset}
           className="btn-ghost flex items-center gap-2"
         >
