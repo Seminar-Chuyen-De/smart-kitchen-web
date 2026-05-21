@@ -28,7 +28,7 @@ export const RecipeSchema = z.object({
   userId:         z.string().min(1, "User ID is required"),
   recipesName:    z.string().min(1, "Tên công thức không được để trống").max(200),
   description:    z.string().max(1000).nullish(),
-  imageRecipe:    z.string().max(1000, "Đường dẫn ảnh quá dài").nullish(),
+  imageRecipe:    z.string().nullish(),
   totalTime:      z.number().int().positive("Thời gian nấu phải là số dương").nullish(),
   calories:       z.number().positive().nullish(),
   protein:        z.number().positive().nullish(),

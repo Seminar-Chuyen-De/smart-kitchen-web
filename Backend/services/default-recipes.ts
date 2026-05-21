@@ -3,8 +3,13 @@ import { prisma } from "@/backend/db/client";
 interface DefaultRecipe {
   name: string;
   description: string;
+  imageRecipe?: string;
   totalTime: number;
   numberOfServes: number;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fats?: number;
   sourceType: "AI_GENERATED" | "MANUAL" | "IMPORTED";
   ingredients: { name: string; icon?: string; quantity?: number; unit?: string }[];
   steps: { stepNumber: number; instruction: string; time?: number }[];
@@ -15,8 +20,13 @@ const RECOMMENDED_RECIPES: DefaultRecipe[] = [
   {
     name: "Phở Bò truyền thống",
     description: "Món ăn quốc hồn quốc túy của Việt Nam với nước dùng thơm ngọt từ xương ống bò, bánh phở mềm và thịt bò tái chín lòng đào.",
+    imageRecipe: "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=800&q=80",
     totalTime: 180,
     numberOfServes: 4,
+    calories: 480,
+    protein: 32,
+    carbs: 52,
+    fats: 12,
     sourceType: "AI_GENERATED",
     ingredients: [
       { name: "Thịt bò", icon: "🥩", quantity: 500, unit: "gram" },
@@ -43,8 +53,13 @@ const RECOMMENDED_RECIPES: DefaultRecipe[] = [
   {
     name: "Bún Chả Hà Nội",
     description: "Sự kết hợp hoàn hảo giữa thịt nướng thơm lừng, chả viên đậm đà đậm chất Hà Thành cùng nước chấm chua ngọt đu đủ xanh.",
+    imageRecipe: "https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=800&q=80",
     totalTime: 45,
     numberOfServes: 3,
+    calories: 520,
+    protein: 28,
+    carbs: 58,
+    fats: 18,
     sourceType: "AI_GENERATED",
     ingredients: [
       { name: "Thịt heo", icon: "🥩", quantity: 500, unit: "gram" },
@@ -69,8 +84,13 @@ const RECOMMENDED_RECIPES: DefaultRecipe[] = [
   {
     name: "Gỏi Cuốn Tôm Thịt",
     description: "Món ăn thanh mát, tốt cho sức khỏe với tôm luộc đỏ au, thịt ba chỉ béo ngậy cuộn cùng rau sống trong bánh tráng dẻo.",
+    imageRecipe: "https://images.unsplash.com/photo-1559847844-5315695dadae?w=800&q=80",
     totalTime: 20,
     numberOfServes: 2,
+    calories: 210,
+    protein: 18,
+    carbs: 24,
+    fats: 5,
     sourceType: "AI_GENERATED",
     ingredients: [
       { name: "Tôm", icon: "🍤", quantity: 200, unit: "gram" },
@@ -92,8 +112,13 @@ const RECOMMENDED_RECIPES: DefaultRecipe[] = [
   {
     name: "Bánh Mì kẹp thịt Việt Nam",
     description: "Món ăn đường phố nổi tiếng toàn cầu, vỏ bánh mì giòn tan kẹp pate béo ngậy, chả lụa thơm ngon và đồ chua thanh mát.",
+    imageRecipe: "https://images.unsplash.com/photo-1558030006-450675393462?w=800&q=80",
     totalTime: 15,
     numberOfServes: 1,
+    calories: 380,
+    protein: 18,
+    carbs: 42,
+    fats: 14,
     sourceType: "AI_GENERATED",
     ingredients: [
       { name: "Thịt heo", icon: "🥩", quantity: 100, unit: "gram" },
@@ -116,8 +141,13 @@ const RECOMMENDED_RECIPES: DefaultRecipe[] = [
   {
     name: "Cơm Tấm sườn bì chả",
     description: "Đặc sản miền Nam trứ danh với hạt cơm tấm dẻo thơm, sườn nướng mật ong đậm đà, bì thính dai giòn và chả trứng hấp béo bùi.",
+    imageRecipe: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800&q=80",
     totalTime: 45,
     numberOfServes: 2,
+    calories: 650,
+    protein: 35,
+    carbs: 72,
+    fats: 22,
     sourceType: "AI_GENERATED",
     ingredients: [
       { name: "Cơm nguội", icon: "🍚", quantity: 2, unit: "bát" },
@@ -143,8 +173,13 @@ const RECOMMENDED_RECIPES: DefaultRecipe[] = [
   {
     name: "Bún Bò Huế",
     description: "Hương vị cay nồng, đậm đà đặc trưng của cố đô Huế với nước dùng thơm lừng mùi mắm ruốc, sả cây nướng và giò heo béo ngậy.",
+    imageRecipe: "https://images.unsplash.com/photo-1555126634-323283e090fa?w=800&q=80",
     totalTime: 120,
     numberOfServes: 4,
+    calories: 510,
+    protein: 30,
+    carbs: 55,
+    fats: 16,
     sourceType: "AI_GENERATED",
     ingredients: [
       { name: "Thịt bò", icon: "🥩", quantity: 400, unit: "gram" },
@@ -168,8 +203,13 @@ const RECOMMENDED_RECIPES: DefaultRecipe[] = [
   {
     name: "Cá Kho Tộ truyền thống",
     description: "Món ăn đưa cơm bậc nhất Việt Nam với cá kho kẹo đậm đà vị mắm, ngọt ngào vị đường thắng và cay nồng tiêu sọ.",
+    imageRecipe: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80",
     totalTime: 40,
     numberOfServes: 3,
+    calories: 290,
+    protein: 26,
+    carbs: 18,
+    fats: 10,
     sourceType: "AI_GENERATED",
     ingredients: [
       { name: "Nước mắm", icon: "🍶", quantity: 4, unit: "muỗng" },
@@ -193,8 +233,13 @@ const RECOMMENDED_RECIPES: DefaultRecipe[] = [
   {
     name: "Bánh Xèo Nam Bộ",
     description: "Vỏ bánh giòn tan màu vàng ươm nghệ, ôm trọn nhân tôm thịt béo ngọt, giá đỗ thanh mát cuộn cùng rau cải xanh.",
+    imageRecipe: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&q=80",
     totalTime: 30,
     numberOfServes: 3,
+    calories: 340,
+    protein: 20,
+    carbs: 30,
+    fats: 14,
     sourceType: "AI_GENERATED",
     ingredients: [
       { name: "Tôm", icon: "🍤", quantity: 150, unit: "gram" },
@@ -218,8 +263,13 @@ const RECOMMENDED_RECIPES: DefaultRecipe[] = [
   {
     name: "Canh Chua Cá Lóc",
     description: "Món canh đậm chất Nam Bộ chua thanh từ me ngọt, dứa thơm, cà chua chín đỏ cùng cá lóc tươi rói ngọt thịt.",
+    imageRecipe: "https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80",
     totalTime: 25,
     numberOfServes: 4,
+    calories: 220,
+    protein: 22,
+    carbs: 16,
+    fats: 6,
     sourceType: "AI_GENERATED",
     ingredients: [
       { name: "Cà chua", icon: "🍅", quantity: 2, unit: "quả" },
@@ -243,8 +293,13 @@ const RECOMMENDED_RECIPES: DefaultRecipe[] = [
   {
     name: "Thịt Kho Tàu nước dừa",
     description: "Món thịt kho truyền thống đậm đà màu cánh gián bắt mắt, thịt mềm nhừ tan trong miệng kết hợp trứng vịt bùi béo.",
+    imageRecipe: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&q=80",
     totalTime: 60,
     numberOfServes: 4,
+    calories: 580,
+    protein: 34,
+    carbs: 20,
+    fats: 38,
     sourceType: "AI_GENERATED",
     ingredients: [
       { name: "Thịt heo", icon: "🥩", quantity: 500, unit: "gram" },
@@ -325,8 +380,13 @@ export async function seedDefaultRecipesForUser(userId: string) {
           userId,
           recipesName: recipe.name,
           description: recipe.description,
+          imageRecipe: recipe.imageRecipe ?? null,
           totalTime: recipe.totalTime,
           numberOfServes: recipe.numberOfServes,
+          calories: recipe.calories ?? null,
+          protein: recipe.protein ?? null,
+          carbs: recipe.carbs ?? null,
+          fats: recipe.fats ?? null,
           sourceType: recipe.sourceType,
           steps: {
             create: recipe.steps.map(s => ({

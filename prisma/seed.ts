@@ -87,6 +87,7 @@ async function main() {
     data: {
       recipesName: "Cơm chiên trứng đơn giản",
       description: "Món cơm chiên nhanh, dễ làm với nguyên liệu cơ bản",
+      imageRecipe: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&q=80",
       totalTime: 15,
       numberOfServes: 2,
       sourceType: "AI_GENERATED",
@@ -117,6 +118,7 @@ async function main() {
     data: {
       recipesName: "Thịt kho tàu",
       description: "Món thịt kho truyền thống đậm đà hương vị",
+      imageRecipe: "https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=800&q=80",
       totalTime: 60,
       numberOfServes: 4,
       sourceType: "MANUAL",
@@ -149,6 +151,7 @@ async function main() {
     data: {
       recipesName: "Canh cà chua trứng",
       description: "Món canh thanh mát, giải nhiệt rất dễ nấu",
+      imageRecipe: "https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80",
       totalTime: 15,
       numberOfServes: 3,
       sourceType: "AI_GENERATED",
@@ -179,6 +182,7 @@ async function main() {
     data: {
       recipesName: "Bò lúc lắc",
       description: "Thịt bò mềm ngọt xào cùng ớt chuông và hành tây",
+      imageRecipe: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80",
       totalTime: 30,
       numberOfServes: 2,
       sourceType: "AI_GENERATED",
@@ -212,6 +216,7 @@ async function main() {
     data: {
       recipesName: "Rau muống xào tỏi",
       description: "Món xào dân dã, giòn ngon và cực kỳ đưa cơm",
+      imageRecipe: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&q=80",
       totalTime: 10,
       numberOfServes: 4,
       sourceType: "MANUAL",
@@ -243,6 +248,7 @@ async function main() {
     data: {
       recipesName: "Nấm xào chay",
       description: "Món chay thanh đạm từ các loại nấm",
+      imageRecipe: "https://images.unsplash.com/photo-1555126634-323283e090fa?w=800&q=80",
       totalTime: 15,
       numberOfServes: 2,
       sourceType: "MANUAL",
@@ -268,10 +274,11 @@ async function main() {
       },
     },
   });
-    const recipe7 = await prisma.recipe.create({
+  const recipe7 = await prisma.recipe.create({
     data: {
       recipesName: "Bò lúc lắc 1",
       description: "Thịt bò mềm ngọt xào cùng ớt chuông và hành tây",
+      imageRecipe: "https://images.unsplash.com/photo-1558030006-450675393462?w=800&q=80",
       totalTime: 30,
       numberOfServes: 2,
       sourceType: "AI_GENERATED",
@@ -344,6 +351,46 @@ async function main() {
       }
     },
   });
+
+  // Cập nhật hình ảnh cho các công thức cũ của mọi người dùng nếu chưa có ảnh
+  console.log("🔄 Cập nhật hình ảnh cho các công thức cũ trong Database...");
+  const RECIPE_IMAGE_MAP: Record<string, string> = {
+    "Phở Bò truyền thống": "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=800&q=80",
+    "Bún Chả Hà Nội": "https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=800&q=80",
+    "Gỏi Cuốn Tôm Thịt": "https://images.unsplash.com/photo-1559847844-5315695dadae?w=800&q=80",
+    "Bánh Mì kẹp thịt Việt Nam": "https://images.unsplash.com/photo-1558030006-450675393462?w=800&q=80",
+    "Cơm Tấm sườn bì chả": "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800&q=80",
+    "Bún Bò Huế": "https://images.unsplash.com/photo-1555126634-323283e090fa?w=800&q=80",
+    "Cá Kho Tộ truyền thống": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80",
+    "Bánh Xèo Nam Bộ": "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&q=80",
+    "Canh Chua Cá Lóc": "https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80",
+    "Thịt Kho Tàu nước dừa": "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&q=80",
+    "Thịt kho tàu": "https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=800&q=80",
+    "Cơm chiên trứng đơn giản": "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&q=80",
+    "Canh cà chua trứng": "https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80",
+    "Bò lúc lắc": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80",
+    "Rau muống xào tỏi": "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&q=80",
+    "Nấm xào chay": "https://images.unsplash.com/photo-1555126634-323283e090fa?w=800&q=80",
+    "Bò lúc lắc 1": "https://images.unsplash.com/photo-1558030006-450675393462?w=800&q=80",
+  };
+
+  for (const [name, url] of Object.entries(RECIPE_IMAGE_MAP)) {
+    const result = await prisma.recipe.updateMany({
+      where: {
+        recipesName: { equals: name, mode: "insensitive" },
+        OR: [
+          { imageRecipe: null },
+          { imageRecipe: "" }
+        ]
+      },
+      data: {
+        imageRecipe: url
+      }
+    });
+    if (result.count > 0) {
+      console.log(`  ✓ Đã cập nhật ảnh cho ${result.count} công thức "${name}"`);
+    }
+  }
 
   console.log("✅ Seed database thành công với recipe ID:", recipe1.recipeId);
 }

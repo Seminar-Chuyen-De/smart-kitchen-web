@@ -3,10 +3,11 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/backend/db/client";
 
 // PUT rename cookbook
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { id } = await params;
 
     const body = await req.json();
     if (!body.name) {
@@ -14,7 +15,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     const updated = await prisma.cookbook.update({
-      where: { cookbookId: Number(params.id), userId },
+      where: { cookbookId: Number(id), userId },
       data: { name: body.name }
     });
 
@@ -26,13 +27,14 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 // DELETE cookbook
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { id } = await params;
 
     const deleted = await prisma.cookbook.delete({
-      where: { cookbookId: Number(params.id), userId }
+      where: { cookbookId: Number(id), userId }
     });
 
     return NextResponse.json(deleted);

@@ -57,6 +57,9 @@ export interface CreateRecipeInput {
   carbs?: number;
   fats?: number;
   source_type?: Recipe["source_type"];
+  // Cho phép truyền steps & ingredients khi tạo recipe
+  ingredients?: { ingredient_id?: number; name: string; quantity: string; unit: string; note: string }[];
+  steps?: { instruction: string; tip: string; time: string }[];
 }
 
 export type UpdateRecipeInput = Partial<CreateRecipeInput> & {
@@ -95,23 +98,71 @@ export function useRecipes() {
   }, [fetchRecipes]);
 
   const createRecipe = useCallback(async (data: CreateRecipeInput): Promise<Recipe | null> => {
+    // Map CreateRecipeInput (snake_case / form shape) → API payload (camelCase)
+    const { ingredients, steps, ...meta } = data;
+
+    const apiPayload: Record<string, unknown> = {
+      recipesName:    meta.recipes_name,
+      description:    meta.description,
+      imageRecipe:    meta.image_recipe,
+      totalTime:      meta.total_time,
+      numberOfServes: meta.number_of_serves,
+      calories:       meta.calories,
+      protein:        meta.protein,
+      carbs:          meta.carbs,
+      fats:           meta.fats,
+      sourceType:     meta.source_type ?? "MANUAL",
+    };
+
+    // Map ingredients nếu có
+    if (ingredients && ingredients.length > 0) {
+      apiPayload.ingredients = ingredients
+        .filter((i) => i.name.trim())
+        .map((i) => ({
+          name:     i.name,
+          quantity: i.quantity ? Number(i.quantity) : undefined,
+          unit:     i.unit || undefined,
+          note:     i.note || undefined,
+        }));
+    }
+
+    // Map steps nếu có
+    if (steps && steps.length > 0) {
+      apiPayload.steps = steps
+        .filter((s) => s.instruction.trim())
+        .map((s, idx) => ({
+          stepNumber:  idx + 1,
+          instruction: s.instruction,
+          tip:         s.tip || undefined,
+          time:        s.time ? Number(s.time) : undefined,
+        }));
+    }
+
     try {
       const res = await fetch("/api/recipes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(apiPayload),
       });
       if (!res.ok) throw new Error("Tạo công thức thất bại");
       const newRecipe: Recipe = await res.json();
       setRecipes((prev) => [newRecipe, ...prev]);
       return newRecipe;
     } catch {
-      // Optimistic update with mock ID
+      // Optimistic update with mock ID (no steps/ingredients in fallback)
       const mockRecipe: Recipe = {
-        ...data,
-        recipe_id: Date.now(),
-        source_type: data.source_type ?? "MANUAL",
-        created_at: new Date().toISOString(),
+        recipes_name:    data.recipes_name,
+        description:     data.description,
+        image_recipe:    data.image_recipe,
+        total_time:      data.total_time,
+        number_of_serves: data.number_of_serves,
+        calories:        data.calories,
+        protein:         data.protein,
+        carbs:           data.carbs,
+        fats:            data.fats,
+        recipe_id:       Date.now(),
+        source_type:     data.source_type ?? "MANUAL",
+        created_at:      new Date().toISOString(),
       };
       setRecipes((prev) => [mockRecipe, ...prev]);
       return mockRecipe;
