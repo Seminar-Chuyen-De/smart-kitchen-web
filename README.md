@@ -11,6 +11,8 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Clerk](https://img.shields.io/badge/Clerk-6C47FF?style=flat-square&logo=clerk&logoColor=white)](https://clerk.com/)
 
+<img width="1919" height="919" alt="Smart_kitchen_img" src="https://github.com/user-attachments/assets/a1f75e2a-09e4-40b1-9a40-741639466e3d" />
+
 
 </div>
 
